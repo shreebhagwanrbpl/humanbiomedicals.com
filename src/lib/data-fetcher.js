@@ -59,7 +59,7 @@ export async function fetchFullCatalog() {
                 collection(
                     db,
                     "websites",
-                    "clinidixcom",
+                    "humanbiomedicalscom",
                     "pages",
                     "categoryproducts",
                     "categories"
@@ -78,7 +78,7 @@ export async function fetchFullCatalog() {
                         const subcategoriesCol = collection(
                             db,
                             "websites",
-                            "clinidixcom",
+                            "humanbiomedicalscom",
                             "pages",
                             "categoryproducts",
                             "categories",
@@ -130,7 +130,7 @@ export async function fetchFullCatalog() {
                     doc(
                         db,
                         "websites",
-                        "clinidixcom",
+                        "humanbiomedicalscom",
                         "pages",
                         "products"
                     )
@@ -172,20 +172,20 @@ export async function fetchFullCatalog() {
  * Helpers for cached document retrieval across pages
  */
 export async function fetchHomeData() {
-    return fetchDocCached("websites/clinidixcom/pages/home");
+    return fetchDocCached("websites/humanbiomedicalscom/pages/home");
 }
 
 export async function fetchContactData() {
-    return fetchDocCached("websites/clinidixcom/pages/contact");
+    return fetchDocCached("websites/humanbiomedicalscom/pages/contact");
 }
 
 export async function fetchServicesData() {
-    return fetchDocCached("websites/clinidixcom/pages/services");
+    return fetchDocCached("websites/humanbiomedicalscom/pages/services");
 }
 
 export async function fetchDistrictData(district) {
     if (!district) return null;
-    return fetchDocCached(`websites/clinidixcom/districts/${district}`);
+    return fetchDocCached(`websites/humanbiomedicalscom/districts/${district}`);
 }
 
 /**
@@ -198,7 +198,7 @@ export function subscribeToCatalog(onUpdate) {
     const categoriesCol = collection(
         db,
         "websites",
-        "clinidixcom",
+        "humanbiomedicalscom",
         "pages",
         "categoryproducts",
         "categories"
@@ -259,7 +259,7 @@ export function subscribeToCatalog(onUpdate) {
     // Listen to legacy products
     try {
         const legacyUnsub = onSnapshot(
-            doc(db, "websites", "clinidixcom", "pages", "products"),
+            doc(db, "websites", "humanbiomedicalscom", "pages", "products"),
             (docSnap) => {
                 if (docSnap.exists()) {
                     legacyProducts = (docSnap.data().products || [])
@@ -312,7 +312,7 @@ export function subscribeToCatalog(onUpdate) {
                         const subCol = collection(
                             db,
                             "websites",
-                            "clinidixcom",
+                            "humanbiomedicalscom",
                             "pages",
                             "categoryproducts",
                             "categories",

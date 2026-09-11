@@ -43,7 +43,84 @@ img {
   display: block;
 }
 
-/* CONTAINER FIX */
+/* =========================================================
+   SVG / ICON GLOBAL FIX
+   ========================================================= */
+
+svg {
+  display: block;
+  visibility: visible;
+  opacity: 1;
+  overflow: visible;
+}
+
+button svg,
+a svg,
+[role="button"] svg {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  flex-shrink: 0;
+}
+
+/* Do NOT hide SVG paths */
+svg path,
+svg rect,
+svg circle,
+svg line,
+svg polyline,
+svg polygon {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* =========================================================
+   HERO CAROUSEL ICON FIX
+   ========================================================= */
+
+.hero-carousel-control,
+.hero-carousel-control *,
+.hero-carousel-control svg,
+.hero-carousel-control svg path,
+.hero-carousel-control svg rect,
+.hero-carousel-control svg circle,
+.hero-carousel-control svg line {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Arrow icons */
+.hero-carousel-control--arrow svg {
+  display: block !important;
+  width: 32px !important;
+  height: 32px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Play / Pause icon */
+.hero-carousel-control--play svg {
+  display: block !important;
+  width: 25px !important;
+  height: 25px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Contact / Explore icons */
+.hero-carousel-control--button svg {
+  display: block !important;
+  width: 20px !important;
+  height: 20px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* =========================================================
+   CONTAINER FIX
+   ========================================================= */
+
 .container-custom {
   width: 100%;
   max-width: 1320px;
@@ -51,12 +128,18 @@ img {
   padding-inline: 24px;
 }
 
-/* SECTION SPACING FIX */
+/* =========================================================
+   SECTION SPACING FIX
+   ========================================================= */
+
 .section-padding {
   padding: 110px 0;
 }
 
-/* PREMIUM BACKGROUND */
+/* =========================================================
+   PREMIUM BACKGROUND
+   ========================================================= */
+
 .gradient-bg {
   background:
     radial-gradient(circle at top left,
@@ -68,22 +151,28 @@ img {
     #f8fafc;
 }
 
-/* GLASS EFFECT */
+/* =========================================================
+   GLASS EFFECT
+   ========================================================= */
+
 .glass-card {
   background: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(18px);
   border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 20px 50px rgba(15, 23, 42, .08);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
 }
 
-/* BUTTONS */
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
 .primary-btn {
   background: var(--primary);
   color: white;
   padding: 15px 28px;
   border-radius: 16px;
   font-weight: 600;
-  transition: all .3s ease;
+  transition: all 0.3s ease;
   white-space: nowrap;
 }
 
@@ -97,16 +186,19 @@ img {
   padding: 15px 28px;
   border-radius: 16px;
   font-weight: 600;
-  transition: all .3s ease;
+  transition: all 0.3s ease;
   white-space: nowrap;
 }
 
 .secondary-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(15, 23, 42, .08);
+  box-shadow: 0 8px 25px rgba(15, 23, 42, 0.08);
 }
 
-/* TITLES */
+/* =========================================================
+   TITLES
+   ========================================================= */
+
 .section-title {
   font-size: clamp(36px, 5vw, 58px);
   line-height: 1.1;
@@ -122,34 +214,48 @@ img {
   font-size: 17px;
 }
 
-/* SHADOW */
+/* =========================================================
+   SHADOW
+   ========================================================= */
+
 .card-shadow {
   box-shadow:
-    0 10px 30px rgba(15, 23, 42, .05),
-    0 20px 60px rgba(15, 23, 42, .06);
+    0 10px 30px rgba(15, 23, 42, 0.05),
+    0 20px 60px rgba(15, 23, 42, 0.06);
 }
 
-/* CARD HEIGHT ALIGNMENT */
+/* =========================================================
+   CARD HEIGHT ALIGNMENT
+   ========================================================= */
+
 .equal-card {
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-/* NAVBAR FIX */
+/* =========================================================
+   NAVBAR FIX
+   ========================================================= */
+
 header {
   width: 100%;
 }
 
-/* CTA OVERFLOW FIX */
+/* =========================================================
+   CTA OVERFLOW FIX
+   ========================================================= */
+
 .cta-grid {
   display: grid;
-  grid-template-columns: 1.4fr .9fr;
+  grid-template-columns: 1.4fr 0.9fr;
   gap: 40px;
   align-items: center;
 }
 
-/* RESPONSIVE */
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
 
 @media (max-width: 1200px) {
   .container-custom {
@@ -158,7 +264,6 @@ header {
 }
 
 @media (max-width: 992px) {
-
   .section-padding {
     padding: 80px 0;
   }
@@ -169,7 +274,6 @@ header {
 }
 
 @media (max-width: 768px) {
-
   .container-custom {
     padding-inline: 20px;
   }
@@ -190,7 +294,6 @@ header {
 }
 
 @media (max-width: 480px) {
-
   .container-custom {
     padding-inline: 16px;
   }
@@ -200,11 +303,9 @@ header {
   }
 }
 
-@keyframes shimmer {
-  100% {
-    transform: translateX(100%);
-  }
-}
+/* =========================================================
+   SHIMMER
+   ========================================================= */
 
 @keyframes shimmer {
   100% {
@@ -228,25 +329,176 @@ header {
       transparent);
   animation: shimmer 1.8s infinite;
 }
-/* UNIQUE UI SYSTEM — VERSION 16 / AquaMed */
-:root{--vp:#007f86;--va:#1bb9c1;--vs:#e3f8fa;--vb:#f5fcfd;--vt:#12383a;--vm:#61777a;}
-body.variant-16{background:var(--vb);color:var(--vt);}
-body.variant-16 header{background:color-mix(in srgb,var(--vb) 90%,transparent)!important;border-color:color-mix(in srgb,var(--vp) 24%,transparent)!important;box-shadow:0 12px 40px color-mix(in srgb,var(--vp) 12%,transparent)!important;position:sticky;}
-body.variant-16 header:after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,transparent,var(--vp),var(--va),transparent);}
-body.variant-16 main{background:var(--vb);}
-body.variant-16 main section{border-color:color-mix(in srgb,var(--vp) 18%,transparent)!important;}
-body.variant-16 main h1,body.variant-16 main h2,body.variant-16 main h3,body.variant-16 main h4{color:var(--vt)!important;}
-body.variant-16 main p{color:var(--vm)!important;}
-body.variant-16 main a[class*="bg-[#C05800]"],body.variant-16 main button[class*="bg-[#C05800]"],body.variant-16 .primary-btn{background:var(--vp)!important;}
-body.variant-16 main a[class*="text-[#C05800]"],body.variant-16 main span[class*="text-[#C05800]"]{color:var(--vp)!important;}
-body.variant-16 main input:focus{border-color:var(--vp)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--vp) 15%,transparent)!important;}
-body.variant-16 main [class*="border-[#E8D3BC"]{border-color:color-mix(in srgb,var(--vp) 20%,transparent)!important;}
-body.variant-16 main [class*="bg-[#FFF9EF"]{background-color:var(--vs)!important;}
-body.variant-16 main [class*="bg-[#FDFBD4"]{background-color:color-mix(in srgb,var(--vs) 60%,var(--vb))!important;}
-body.variant-16 main [class*="bg-[#F3E4D2"]{background-color:color-mix(in srgb,var(--vs) 42%,var(--vb))!important;}
-body.variant-16 main [class*="shadow"]{box-shadow:0 20px 50px color-mix(in srgb,var(--vp) 10%,transparent)!important;}
-body.variant-16 .section-padding{padding-block:101px;}
-body.variant-16 main .rounded-3xl{border-radius:44px!important;}
-body.variant-16 main .rounded-2xl{border-radius:14px!important;}
-body.variant-16 main .primary-btn,body.variant-16 main a[class*="bg-[#C05800]"],body.variant-16 main button[class*="bg-[#C05800]"]{border-radius:13px!important;}
-body.variant-16 main section{border-radius:0 0 72px 72px;}
+
+/* =========================================================
+   UNIQUE UI SYSTEM — VERSION 16 / Raj Biosis
+   ========================================================= */
+
+:root {
+  --vp: #007f86;
+  --va: #1bb9c1;
+  --vs: #e3f8fa;
+  --vb: #f5fcfd;
+  --vt: #12383a;
+  --vm: #61777a;
+}
+
+body.variant-16 {
+  background: var(--vb);
+  color: var(--vt);
+}
+
+body.variant-16 header {
+  background: color-mix(in srgb,
+      var(--vb) 90%,
+      transparent) !important;
+
+  border-color: color-mix(in srgb,
+      var(--vp) 24%,
+      transparent) !important;
+
+  box-shadow:
+    0 12px 40px color-mix(in srgb,
+      var(--vp) 12%,
+      transparent) !important;
+
+  position: sticky;
+}
+
+body.variant-16 header:after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+
+  background: linear-gradient(90deg,
+      transparent,
+      var(--vp),
+      var(--va),
+      transparent);
+}
+
+body.variant-16 main {
+  background: var(--vb);
+}
+
+body.variant-16 main section {
+  border-color: color-mix(in srgb,
+      var(--vp) 18%,
+      transparent) !important;
+}
+
+body.variant-16 main h1,
+body.variant-16 main h2,
+body.variant-16 main h3,
+body.variant-16 main h4 {
+  color: var(--vt) !important;
+}
+
+body.variant-16 main p {
+  color: var(--vm) !important;
+}
+
+body.variant-16 main a[class*="bg-[#007f86]"],
+body.variant-16 main button[class*="bg-[#007f86]"],
+body.variant-16 .primary-btn {
+  background: var(--vp) !important;
+}
+
+body.variant-16 main a[class*="text-[#007f86]"],
+body.variant-16 main span[class*="text-[#007f86]"] {
+  color: var(--vp) !important;
+}
+
+body.variant-16 main input:focus {
+  border-color: var(--vp) !important;
+
+  box-shadow:
+    0 0 0 3px color-mix(in srgb,
+      var(--vp) 15%,
+      transparent) !important;
+}
+
+body.variant-16 main [class*="border-[#bfe8ea"] {
+  border-color: color-mix(in srgb,
+      var(--vp) 20%,
+      transparent) !important;
+}
+
+body.variant-16 main [class*="bg-[#f5fcfd"] {
+  background-color: var(--vs) !important;
+}
+
+body.variant-16 main [class*="bg-[#eaf9fa"] {
+  background-color: color-mix(in srgb,
+      var(--vs) 60%,
+      var(--vb)) !important;
+}
+
+body.variant-16 main [class*="bg-[#d9f3f5"] {
+  background-color: color-mix(in srgb,
+      var(--vs) 42%,
+      var(--vb)) !important;
+}
+
+body.variant-16 main [class*="shadow"] {
+  box-shadow:
+    0 20px 50px color-mix(in srgb,
+      var(--vp) 10%,
+      transparent) !important;
+}
+
+body.variant-16 .section-padding {
+  padding-block: 101px;
+}
+
+body.variant-16 main .rounded-3xl {
+  border-radius: 44px !important;
+}
+
+body.variant-16 main .rounded-2xl {
+  border-radius: 14px !important;
+}
+
+body.variant-16 main .primary-btn,
+body.variant-16 main a[class*="bg-[#007f86]"],
+body.variant-16 main button[class*="bg-[#007f86]"] {
+  border-radius: 13px !important;
+}
+
+body.variant-16 main section {
+  border-radius: 0 0 72px 72px;
+}
+
+/* =========================================================
+   FINAL HERO ICON SAFETY
+   ========================================================= */
+
+/*
+  Ye rules HeroCarousel ke icons ko kisi bhi global
+  Tailwind / theme CSS se hide hone nahi denge.
+*/
+
+body.variant-16 main .hero-carousel-control {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+body.variant-16 main .hero-carousel-control svg {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+body.variant-16 main .hero-carousel-control svg path {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+body.variant-16 main .hero-carousel-control svg rect {
+  visibility: visible !important;
+  opacity: 1 !important;
+}

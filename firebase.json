@@ -1,6 +1,6 @@
 {
   "apphosting": {
-    "backendId": "clinidixcom",
+    "backendId": "humanbiomedicalscom",
     "rootDir": "/",
     "ignore": [
       "node_modules",

@@ -4,9 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { doc, getDoc, collection, getDocs } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { motion } from "framer-motion";
+
 import {
   Microscope,
   FlaskConical,
@@ -32,9 +33,14 @@ import ServiceCard from "@/components/ServiceCard";
 import ProductCard from "@/components/ProductCard";
 import ContactForm from "@/components/ContactForm";
 import HeroCarousel from "@/components/HeroCarousel";
+
 import { fallbackProducts } from "@/data/productsData";
-import { fallbackServices } from "@/data/servicesData";
 import { fetchAllDynamicProducts } from "@/lib/fetchProducts";
+
+
+// ============================================================
+// STATIC STATS
+// ============================================================
 
 const stats = [
   {
@@ -63,6 +69,11 @@ const stats = [
   },
 ];
 
+
+// ============================================================
+// STATIC PILLARS
+// ============================================================
+
 const pillars = [
   {
     title: "Certified Calibration Standards",
@@ -90,23 +101,31 @@ const pillars = [
   },
 ];
 
+
+// ============================================================
+// STATIC TESTIMONIALS
+// ============================================================
+
 const testimonials = [
   {
-    quote: "Raj Biomedical transformed our central laboratory setup. Their automated analyzers increased our daily sample throughput by 40% with zero downtime.",
+    quote:
+      "Raj Biosis transformed our central laboratory setup. Their automated analyzers increased our daily sample throughput by 40% with zero downtime.",
     author: "Dr. Arvind Sharma",
     role: "Chief Pathologist",
     institution: "Apollo Diagnostics Center",
     rating: 5,
   },
   {
-    quote: "The 24/7 AMC response team is outstanding. When our ICU patient monitor system faced a sensor issue, their engineer arrived within 90 minutes.",
+    quote:
+      "The 24/7 AMC response team is outstanding. When our ICU patient monitor system faced a sensor issue, their engineer arrived within 90 minutes.",
     author: "Dr. Meenakshi Sundaram",
     role: "Medical Director",
     institution: "Metro Multispecialty Hospital",
     rating: 5,
   },
   {
-    quote: "Their cold-chain reagent delivery has never failed us. Quality control results are consistently accurate, month after month.",
+    quote:
+      "Their cold-chain reagent delivery has never failed us. Quality control results are consistently accurate, month after month.",
     author: "Rajesh Varma",
     role: "Laboratory Operations Manager",
     institution: "LifeCare PathLabs",
@@ -114,165 +133,594 @@ const testimonials = [
   },
 ];
 
+
 export default function Home({ city }) {
-  const [services, setServices] = useState(fallbackServices);
-  const [products, setProducts] = useState(fallbackProducts);
-  const [activeCategory, setActiveCategory] = useState("All");
-  const [homeData, setHomeData] = useState(null);
-  const [contactInfo, setContactInfo] = useState([]);
-  const [loading, setLoading] = useState(true);
+
+  // ============================================================
+  // SERVICES
+  // ADMIN / FIREBASE ONLY
+  // NO STATIC FALLBACK
+  // ============================================================
+
+  const [services, setServices] = useState([]);
+
+
+  // ============================================================
+  // PRODUCTS
+  // Existing product behavior kept
+  // ============================================================
+
+  const [products, setProducts] =
+    useState(fallbackProducts);
+
+
+  const [homeData, setHomeData] =
+    useState(null);
+
+
+  const [contactInfo, setContactInfo] =
+    useState([]);
+
+
+  const [loading, setLoading] =
+    useState(true);
+
+
+  // ============================================================
+  // ROUTE / DISTRICT
+  // ============================================================
 
   const pathname = usePathname();
-  const pathParts = pathname.split("/").filter(Boolean);
 
-  const staticRoutes = ["about", "services", "items", "contact"];
+  const pathParts =
+    pathname
+      .split("/")
+      .filter(Boolean);
+
+
+  const staticRoutes = [
+    "about",
+    "services",
+    "items",
+    "contact",
+  ];
+
+
   const district =
-    pathParts.length > 0 && !staticRoutes.includes(pathParts[0])
+    pathParts.length > 0 &&
+      !staticRoutes.includes(pathParts[0])
       ? pathParts[0]
       : "";
 
-  const locationTitle = city || (district ? district.replace(/-/g, " ") : "");
+
+  const locationTitle =
+    city ||
+    (district
+      ? district.replace(/-/g, " ")
+      : "");
+
 
   const makeLink = (path) => {
-    if (!district) return path;
-    if (path === "/") return `/${district}`;
+
+    if (!district) {
+      return path;
+    }
+
+
+    if (path === "/") {
+      return `/${district}`;
+    }
+
+
     return `/${district}${path}`;
   };
 
+
+  // ============================================================
+  // FIREBASE DATA
+  // ============================================================
+
   useEffect(() => {
+
     const fetchData = async () => {
+
       try {
-        // Fetch home page configuration (title, description, buttons, carousel media)
+
+        // ======================================================
+        // HOME DATA
+        // ======================================================
+
         try {
+
           const homeSnap = await getDoc(
-            doc(db, "websites", "clinidixcom", "pages", "home")
+            doc(
+              db,
+              "websites",
+              "humanbiomedicalscom",
+              "pages",
+              "home"
+            )
           );
+
+
           if (homeSnap.exists()) {
-            setHomeData(homeSnap.data());
+
+            setHomeData(
+              homeSnap.data()
+            );
+
+          } else {
+
+            setHomeData(null);
+
           }
+
         } catch (homeErr) {
-          console.error("Error fetching home data:", homeErr);
-        }
 
-        // Fetch contact information for dynamic helpline info
-        try {
-          const contactSnap = await getDoc(
-            doc(db, "websites", "clinidixcom", "pages", "contact")
+          console.error(
+            "Error fetching home data:",
+            homeErr
           );
+
+          setHomeData(null);
+
+        }
+
+
+        // ======================================================
+        // CONTACT DATA
+        // ======================================================
+
+        try {
+
+          const contactSnap = await getDoc(
+            doc(
+              db,
+              "websites",
+              "humanbiomedicalscom",
+              "pages",
+              "contact"
+            )
+          );
+
+
           if (contactSnap.exists()) {
-            setContactInfo(contactSnap.data().contactInfo || []);
+
+            const contactData =
+              contactSnap.data();
+
+
+            setContactInfo(
+              Array.isArray(
+                contactData?.contactInfo
+              )
+                ? contactData.contactInfo
+                : []
+            );
+
+          } else {
+
+            setContactInfo([]);
+
           }
+
         } catch (contactErr) {
-          console.error("Error fetching contact data:", contactErr);
+
+          console.error(
+            "Error fetching contact data:",
+            contactErr
+          );
+
+          setContactInfo([]);
+
         }
 
-        // Fetch services from Firebase if available
-        const serviceSnap = await getDoc(
-          doc(db, "websites", "clinidixcom", "pages", "services")
-        );
-        if (serviceSnap.exists() && serviceSnap.data().services?.length > 0) {
-          const dbServices = serviceSnap.data().services.map((s, idx) => ({
-            ...fallbackServices[idx % fallbackServices.length],
-            title: s.title || fallbackServices[idx % fallbackServices.length].title,
-            desc: s.desc || fallbackServices[idx % fallbackServices.length].desc,
-          }));
-          setServices(dbServices);
+
+        // ======================================================
+        // SERVICES
+        // ADMIN / FIREBASE ONLY
+        // ======================================================
+        //
+        // Admin me jo save ho raha hai:
+        //
+        // title
+        // desc
+        //
+        // wahi dynamic show hoga.
+        //
+        // fallbackServices bilkul use nahi hoga.
+        // ======================================================
+
+        try {
+
+          const serviceSnap =
+            await getDoc(
+              doc(
+                db,
+                "websites",
+                "humanbiomedicalscom",
+                "pages",
+                "services"
+              )
+            );
+
+
+          if (serviceSnap.exists()) {
+
+            const data =
+              serviceSnap.data();
+
+
+            const dbServices =
+              Array.isArray(
+                data?.services
+              )
+                ? data.services
+                  .map(
+                    (
+                      service,
+                      index
+                    ) => ({
+
+                      id:
+                        service?.id ||
+                        `service-${index}`,
+
+                      title:
+                        typeof service?.title ===
+                          "string"
+                          ? service.title.trim()
+                          : "",
+
+                      desc:
+                        typeof service?.desc ===
+                          "string"
+                          ? service.desc.trim()
+                          : "",
+
+                    })
+                  )
+                  .filter(
+                    (service) =>
+                      service.title &&
+                      service.desc
+                  )
+                : [];
+
+
+            // Firebase data only
+            setServices(
+              dbServices
+            );
+
+          } else {
+
+            // No Firebase document
+            setServices([]);
+
+          }
+
+        } catch (serviceErr) {
+
+          console.error(
+            "Error fetching services:",
+            serviceErr
+          );
+
+
+          // No fallback
+          setServices([]);
+
         }
 
-        // Fetch products dynamically from Firestore
-        const fetchedProducts = await fetchAllDynamicProducts();
-        if (fetchedProducts && fetchedProducts.length > 0) {
-          setProducts(fetchedProducts);
+
+        // ======================================================
+        // PRODUCTS
+        // ======================================================
+
+        try {
+
+          const fetchedProducts =
+            await fetchAllDynamicProducts();
+
+
+          if (
+            fetchedProducts &&
+            fetchedProducts.length > 0
+          ) {
+
+            setProducts(
+              fetchedProducts
+            );
+
+          } else {
+
+            setProducts(
+              fallbackProducts
+            );
+
+          }
+
+        } catch (productErr) {
+
+          console.error(
+            "Error fetching products:",
+            productErr
+          );
+
+          // Existing product fallback retained
+          setProducts(
+            fallbackProducts
+          );
+
         }
+
       } catch (err) {
-        console.error("Using fallback data:", err);
+
+        console.error(
+          "Error loading home data:",
+          err
+        );
+
+        // Services never fallback
+        setServices([]);
+
       } finally {
+
         setLoading(false);
+
       }
+
     };
 
+
     fetchData();
+
   }, []);
 
-  const categories = ["All", ...Array.from(new Set(products.map((p) => p.category)))];
 
-  const filteredProducts =
-    activeCategory === "All"
-      ? products.slice(0, 6)
-      : products.filter((p) => p.category === activeCategory).slice(0, 6);
+  // ============================================================
+  // HOME PAGE PRODUCTS
+  // ONLY 3 PRODUCTS
+  // ============================================================
+
+  const featuredProducts =
+    products.slice(0, 3);
+
+
+  // ============================================================
+  // SERVICE ICONS
+  // STATIC
+  // ============================================================
 
   const serviceIcons = [
-    <Microscope size={28} key={1} />,
-    <Building2 size={28} key={2} />,
-    <Wrench size={28} key={3} />,
-    <FlaskConical size={28} key={4} />,
-    <Stethoscope size={28} key={5} />,
-    <Award size={28} key={6} />,
+    <Microscope
+      size={28}
+      key={1}
+    />,
+
+    <Building2
+      size={28}
+      key={2}
+    />,
+
+    <Wrench
+      size={28}
+      key={3}
+    />,
+
+    <FlaskConical
+      size={28}
+      key={4}
+    />,
+
+    <Stethoscope
+      size={28}
+      key={5}
+    />,
+
+    <Award
+      size={28}
+      key={6}
+    />,
   ];
 
-  // Helper to extract dynamic phone from contact info
-  const helplinePhone = (() => {
-    const item = contactInfo.find(
-      (c) =>
-        c?.label?.toLowerCase().includes("phone") ||
-        c?.label?.toLowerCase().includes("mobile") ||
-        c?.label?.toLowerCase().includes("helpline") ||
-        c?.label?.toLowerCase().includes("contact")
-    );
-    if (!item) return "";
-    if (Array.isArray(item.value)) return item.value[0] || "";
-    return typeof item.value === "string" ? item.value.trim() : "";
-  })();
 
-  // Helper to extract dynamic email from contact info
-  const supportEmail = (() => {
-    const item = contactInfo.find(
-      (c) =>
-        c?.label?.toLowerCase().includes("email") ||
-        c?.label?.toLowerCase().includes("mail")
-    );
-    if (!item) return "";
-    if (Array.isArray(item.value)) return item.value[0] || "";
-    return typeof item.value === "string" ? item.value.trim() : "";
-  })();
+  // ============================================================
+  // HELPLINE PHONE
+  // ============================================================
+
+  const helplinePhone =
+    (() => {
+
+      const item =
+        contactInfo.find(
+          (c) => {
+
+            const label =
+              c?.label?.toLowerCase() ||
+              "";
+
+
+            return (
+              label.includes("phone") ||
+              label.includes("mobile") ||
+              label.includes("helpline") ||
+              label.includes("contact")
+            );
+
+          }
+        );
+
+
+      if (!item) {
+        return "";
+      }
+
+
+      if (
+        Array.isArray(
+          item.value
+        )
+      ) {
+
+        return (
+          item.value[0] ||
+          ""
+        );
+
+      }
+
+
+      return typeof item.value ===
+        "string"
+        ? item.value.trim()
+        : "";
+
+    })();
+
+
+  // ============================================================
+  // SUPPORT EMAIL
+  // ============================================================
+
+  const supportEmail =
+    (() => {
+
+      const item =
+        contactInfo.find(
+          (c) => {
+
+            const label =
+              c?.label?.toLowerCase() ||
+              "";
+
+
+            return (
+              label.includes("email") ||
+              label.includes("mail")
+            );
+
+          }
+        );
+
+
+      if (!item) {
+        return "";
+      }
+
+
+      if (
+        Array.isArray(
+          item.value
+        )
+      ) {
+
+        return (
+          item.value[0] ||
+          ""
+        );
+
+      }
+
+
+      return typeof item.value ===
+        "string"
+        ? item.value.trim()
+        : "";
+
+    })();
+
 
   return (
-    <div className="bg-[#FFF9EF]/40 text-[#38240D]">
-      {/* ================= DYNAMIC HERO BANNER & CAROUSEL ================= */}
+
+    <div className="bg-[#f5fcfd]/40 text-[#12383a]">
+
+
+      {/* ========================================================
+          HERO BANNER & CAROUSEL
+      ======================================================== */}
+
       <HeroCarousel
         homeData={homeData}
         locationTitle={locationTitle}
         makeLink={makeLink}
       />
 
-      {/* ================= STATS TICKER ================= */}
-      <section className="bg-gradient-to-r from-[#38240D] via-[#5B4634] to-[#38240D] py-10 text-white shadow-inner">
+
+      {/* ========================================================
+          STATS TICKER
+      ======================================================== */}
+
+      <section className="bg-gradient-to-r from-[#12383a] via-[#12383a] to-[#12383a] py-10 text-white shadow-inner">
+
         <div className="container-custom">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {stats.map((item, idx) => {
-              const Icon = item.icon;
-              return (
-                <div key={idx} className="flex items-center gap-4">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#C05800]/25 text-[#E4C5A2] border border-[#C05800]/40">
-                    <Icon size={26} />
+
+          <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
+
+            {stats.map(
+              (item, idx) => {
+
+                const Icon =
+                  item.icon;
+
+
+                return (
+
+                  <div
+                    key={idx}
+                    className="flex items-center gap-4"
+                  >
+
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-[#007f86]/40 bg-[#007f86]/25 text-[#bfe8ea]">
+
+                      <Icon
+                        size={26}
+                      />
+
+                    </div>
+
+
+                    <div>
+
+                      <h3 className="text-2xl font-black tracking-tight !text-white sm:text-3xl">
+                        {item.number}
+                      </h3>
+
+
+                      <p className="text-xs font-bold !text-[#bfe8ea] sm:text-sm">
+                        {item.title}
+                      </p>
+
+
+                      <p className="hidden text-[11px] !text-[#bfe8ea]/80 sm:block">
+                        {item.desc}
+                      </p>
+
+                    </div>
+
                   </div>
-                  <div>
-                    <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-                      {item.number}
-                    </h3>
-                    <p className="text-xs sm:text-sm font-bold text-[#E4C5A2]">{item.title}</p>
-                    <p className="text-[11px] text-[#E8D3BC]/80 hidden sm:block">{item.desc}</p>
-                  </div>
-                </div>
-              );
-            })}
+
+                );
+
+              }
+            )}
+
           </div>
+
         </div>
+
       </section>
 
-      {/* ================= PILLARS / WHY CHOOSE US ================= */}
-      <section className="section-padding bg-gradient-to-b from-white via-[#FFF9EF] to-[#FDFBD4]">
+
+      {/* ========================================================
+          WHY CHOOSE US
+      ======================================================== */}
+
+      <section className="section-padding bg-gradient-to-b from-white via-[#f5fcfd] to-[#eaf9fa]">
+
         <div className="container-custom">
+
           <SectionTitle
             badge="Why Modern Labs Choose Us"
             title="Flowing From Test to Insight"
@@ -280,90 +728,152 @@ export default function Home({ city }) {
             center
           />
 
+
           <div className="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            {pillars.map((pillar, index) => {
-              const Icon = pillar.icon;
-              return (
-                <div
-                  key={index}
-                  className="group relative flex flex-col justify-between rounded-3xl border border-[#E8D3BC] bg-white p-8 shadow-md transition-all duration-300 hover:-translate-y-2 hover:border-[#C05800]/50 hover:shadow-2xl hover:shadow-[#C05800]/15"
-                >
-                  <div>
-                    <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F3E4D2] text-[#C05800] transition-all duration-300 group-hover:bg-[#C05800] group-hover:text-white group-hover:scale-110 shadow-sm">
-                      <Icon size={28} />
+
+            {pillars.map(
+              (pillar, index) => {
+
+                const Icon =
+                  pillar.icon;
+
+
+                return (
+
+                  <div
+                    key={index}
+                    className="group relative flex flex-col justify-between rounded-3xl border border-[#bfe8ea] bg-white p-8 shadow-md transition-all duration-300 hover:-translate-y-2 hover:border-[#007f86] hover:shadow-2xl hover:shadow-[#007f86]/15"
+                  >
+
+                    <div>
+
+                      <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl !bg-[#d9f3f5] shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:!bg-[#007f86]">
+
+                        <Icon
+                          size={28}
+                          strokeWidth={2.5}
+                          className="!text-[#007f86] transition-colors duration-300 group-hover:!text-white"
+                        />
+
+                      </div>
+
+
+                      <span className="mb-3 inline-block rounded-full border border-[#bfe8ea] !bg-[#f5fcfd] px-3 py-1 text-xs font-bold !text-[#00656a]">
+                        {pillar.badge}
+                      </span>
+
+
+                      <h3 className="mb-3 text-xl font-bold !text-[#12383a] transition-colors duration-300 group-hover:!text-[#007f86]">
+                        {pillar.title}
+                      </h3>
+
+
+                      <p className="text-sm leading-relaxed !text-[#12383a]">
+                        {pillar.desc}
+                      </p>
+
                     </div>
 
-                    <span className="mb-3 inline-block rounded-full bg-[#FFF9EF] border border-[#E8D3BC] px-3 py-1 text-xs font-bold text-[#713600]">
-                      {pillar.badge}
-                    </span>
 
-                    <h3 className="mb-3 text-xl font-bold text-[#38240D] group-hover:text-[#C05800] transition-colors">
-                      {pillar.title}
-                    </h3>
+                    <div className="mt-8 flex items-center gap-2 border-t border-[#bfe8ea]/40 pt-4 text-xs font-bold !text-[#007f86]">
 
-                    <p className="text-sm leading-relaxed text-[#5B4634]">
-                      {pillar.desc}
-                    </p>
+                      <span className="!text-[#007f86]">
+                        Learn standard
+                      </span>
+
+
+                      <ArrowRight
+                        size={15}
+                        strokeWidth={2.5}
+                        className="!text-[#007f86] transition-transform duration-300 group-hover:translate-x-1"
+                      />
+
+                    </div>
+
                   </div>
 
-                  <div className="mt-8 pt-4 border-t border-[#E8D3BC]/40 flex items-center gap-2 text-xs font-bold text-[#C05800]">
-                    <span>Learn standard</span>
-                    <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
-                  </div>
-                </div>
-              );
-            })}
+                );
+
+              }
+            )}
+
           </div>
+
         </div>
+
       </section>
 
-      {/* ================= FEATURED PRODUCTS SHOWCASE ================= */}
-      <section className="section-padding bg-white border-y border-[#E8D3BC]/50">
+
+      {/* ========================================================
+          FEATURED PRODUCTS
+      ======================================================== */}
+
+      <section className="section-padding border-y border-[#bfe8ea]/50 bg-white">
+
         <div className="container-custom">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+
+          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+
             <SectionTitle
               badge="Diagnostic Inventory"
               title="Equipment Worth Exploring"
               description="Explore our curated catalog of automated clinical analyzers, PCR units, ICU patient monitors, and laboratory centrifuges."
             />
 
+
             <Link
-              href={makeLink("/items")}
-              className="inline-flex items-center gap-2 rounded-2xl bg-[#FFF9EF] border border-[#E8D3BC] px-6 py-3.5 text-sm font-bold text-[#C05800] shadow-sm transition-all hover:bg-[#C05800] hover:text-white hover:border-[#C05800] shrink-0"
+              href={makeLink(
+                "/items"
+              )}
+              className="group inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl border !border-[#007f86] !bg-[#f5fcfd] px-6 py-3.5 text-sm font-bold !text-[#007f86] shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:!bg-[#007f86] hover:!text-white hover:shadow-lg"
             >
-              <span>View All Products</span>
-              <ArrowRight size={16} />
+
+              <span className="!text-[#007f86] group-hover:!text-white">
+                View All Products
+              </span>
+
+
+              <ArrowRight
+                size={16}
+                strokeWidth={2.5}
+                className="!text-[#007f86] group-hover:!text-white"
+              />
+
             </Link>
+
           </div>
 
-          {/* Category Tabs */}
-          <div className="mt-10 flex flex-wrap items-center gap-3 border-b border-[#E8D3BC]/60 pb-4">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`rounded-xl px-5 py-2.5 text-xs sm:text-sm font-bold transition-all ${activeCategory === cat
-                  ? "bg-[#C05800] text-white shadow-md shadow-[#C05800]/20"
-                  : "bg-[#FFF9EF] border border-[#E8D3BC] text-[#5B4634] hover:bg-[#F3E4D2]"
-                  }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
 
-          {/* Product Grid */}
           <div className="mt-10 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {filteredProducts.map((prod) => (
-              <ProductCard key={prod.id} product={prod} makeLink={makeLink} />
-            ))}
+
+            {featuredProducts.map(
+              (prod) => (
+
+                <ProductCard
+                  key={prod.id}
+                  product={prod}
+                  makeLink={makeLink}
+                />
+
+              )
+            )}
+
           </div>
+
         </div>
+
       </section>
 
-      {/* ================= SERVICES MATRIX ================= */}
-      <section className="section-padding bg-gradient-to-b from-[#FDFBD4] via-white to-[#FFF9EF]">
+
+      {/* ========================================================
+          SERVICES MATRIX
+          ======================================================== */}
+
+      <section className="section-padding bg-gradient-to-b from-[#eaf9fa] via-white to-[#f5fcfd]">
+
         <div className="container-custom">
+
+
           <SectionTitle
             badge="Healthcare Solutions"
             title="Support Built Around Your Workflow"
@@ -371,96 +881,334 @@ export default function Home({ city }) {
             center
           />
 
+
           <div className="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {services.map((srv, idx) => (
-              <ServiceCard
-                key={srv.id || idx}
-                icon={serviceIcons[idx % serviceIcons.length]}
-                title={srv.title}
-                description={srv.desc}
-                badge={srv.badge}
-                turnaround={srv.turnaround}
-                highlights={srv.highlights}
-                makeLink={makeLink}
-              />
-            ))}
+
+
+            {/* ==================================================
+                LOADING STATE
+            ================================================== */}
+
+            {loading &&
+              Array.from({
+                length: 3,
+              }).map(
+                (_, index) => (
+
+                  <div
+                    key={`service-loading-${index}`}
+                    className="rounded-3xl border border-[#bfe8ea] bg-white p-8 shadow-sm animate-pulse"
+                  >
+
+                    <div className="h-14 w-14 rounded-2xl bg-[#eaf9fa]" />
+
+
+                    <div className="mt-6 h-6 w-3/4 rounded bg-[#eaf9fa]" />
+
+
+                    <div className="mt-4 space-y-3">
+
+                      <div className="h-4 w-full rounded bg-[#eaf9fa]" />
+
+                      <div className="h-4 w-5/6 rounded bg-[#eaf9fa]" />
+
+                      <div className="h-4 w-2/3 rounded bg-[#eaf9fa]" />
+
+                    </div>
+
+                  </div>
+
+                )
+              )}
+
+
+            {/* ==================================================
+                DYNAMIC SERVICES
+                ADMIN / FIREBASE ONLY
+            ================================================== */}
+
+            {!loading &&
+              services.length > 0 &&
+              services.map(
+                (srv, idx) => (
+
+                  <ServiceCard
+                    key={
+                      srv.id ||
+                      idx
+                    }
+
+                    icon={
+                      serviceIcons[
+                      idx %
+                      serviceIcons.length
+                      ]
+                    }
+
+                    title={
+                      srv.title
+                    }
+
+                    description={
+                      srv.desc
+                    }
+
+                    makeLink={
+                      makeLink
+                    }
+                  />
+
+                )
+              )}
+
+
+            {/* ==================================================
+                NO SERVICES FOUND
+            ================================================== */}
+
+            {!loading &&
+              services.length === 0 && (
+
+                <div className="col-span-full flex justify-center py-2">
+
+                  <div className="w-full max-w-2xl rounded-3xl border border-[#bfe8ea] bg-white p-10 text-center shadow-sm sm:p-12">
+
+
+                    {/* ICON */}
+
+                    <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-[#eaf9fa] text-[#007f86]">
+
+                      <Stethoscope
+                        size={36}
+                        strokeWidth={2.5}
+                      />
+
+                    </div>
+
+
+                    {/* TITLE */}
+
+                    <h3 className="mt-6 text-2xl font-black !text-[#12383a] sm:text-3xl">
+                      No Services Found
+                    </h3>
+
+
+                    {/* DESCRIPTION */}
+
+                    <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed !text-[#426568] sm:text-base">
+                      No services are currently
+                      available in our service
+                      catalog. Please check back
+                      later or contact our team
+                      for more information.
+                    </p>
+
+
+                    {/* CONTACT BUTTON */}
+
+                    <Link
+                      href={makeLink(
+                        "/contact"
+                      )}
+                      className="mt-7 inline-flex items-center justify-center rounded-2xl !bg-[#007f86] px-7 py-3.5 text-sm font-bold !text-white shadow-lg transition-all duration-300 hover:!bg-[#00656a] hover:-translate-y-0.5"
+                    >
+                      Contact Our Team
+                    </Link>
+
+                  </div>
+
+                </div>
+
+              )}
+
           </div>
+
         </div>
+
       </section>
 
-      {/* ================= ISO & QUALITY CERTIFICATION BANNER ================= */}
-      <section className="section-padding bg-[#38240D] text-white relative overflow-hidden">
-        <div className="pointer-events-none absolute -right-20 -bottom-20 h-96 w-96 rounded-full bg-[#C05800]/20 blur-3xl" />
+
+      {/* ========================================================
+          ISO & QUALITY CERTIFICATION
+      ======================================================== */}
+
+      <section className="relative overflow-hidden bg-[#12383a] !text-white section-padding">
+
+        <div className="pointer-events-none absolute -bottom-20 -right-20 h-96 w-96 rounded-full bg-[#007f86]/30 blur-3xl" />
+
+        <div className="pointer-events-none absolute -left-32 -top-32 h-80 w-80 rounded-full bg-[#1bb9c1]/10 blur-3xl" />
+
+
         <div className="container-custom relative z-10">
-          <div className="grid lg:grid-cols-12 gap-12 items-center">
+
+          <div className="grid items-center gap-12 lg:grid-cols-12">
+
+
+            {/* LEFT */}
+
             <div className="lg:col-span-7">
-              <span className="inline-flex items-center gap-2 rounded-full bg-[#C05800]/30 border border-[#C05800]/50 px-4 py-1.5 text-xs font-bold text-[#E4C5A2] uppercase tracking-wider">
-                <Award size={16} /> Quality Assurance & Compliance
+
+              <span className="inline-flex items-center gap-2 rounded-full border border-[#1bb9c1]/50 !bg-[#007f86]/30 px-4 py-1.5 text-xs font-bold uppercase tracking-wider !text-[#eaf9fa] shadow-sm">
+
+                <Award
+                  size={16}
+                  strokeWidth={2.5}
+                  className="!text-[#eaf9fa]"
+                />
+
+                <span className="!text-[#eaf9fa]">
+                  Quality Assurance & Compliance
+                </span>
+
               </span>
 
-              <h2 className="mt-6 text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight">
+
+              <h2 className="mt-6 text-3xl font-black leading-tight !text-white sm:text-4xl lg:text-5xl">
                 Uncompromised Clinical Accuracy & Regulatory Standards
               </h2>
 
-              <p className="mt-4 text-base sm:text-lg text-[#E8D3BC]/90 leading-relaxed">
-                Raj Biosisstrictly adheres to international quality protocols. Every equipment installation comes with complete IQ/OQ/PQ validation documentation and certified calibration reports.
+
+              <p className="mt-5 max-w-3xl text-base leading-relaxed !text-[#d9f3f5] sm:text-lg">
+                Raj Biosis strictly adheres to international quality protocols.
+                Every equipment installation comes with complete IQ/OQ/PQ
+                validation documentation and certified calibration reports.
               </p>
 
-              <div className="mt-8 grid sm:grid-cols-2 gap-4">
-                <div className="rounded-2xl border border-[#E8D3BC]/20 bg-white/5 p-5 backdrop-blur-sm">
-                  <h4 className="text-lg font-bold text-white flex items-center gap-2">
-                    <ShieldCheck size={20} className="text-[#C05800]" />
-                    ISO 13485 & CE Compliance
+
+              <div className="mt-8 grid gap-4 sm:grid-cols-2">
+
+
+                {/* ISO CARD */}
+
+                <div className="rounded-2xl border border-[#bfe8ea]/25 !bg-white/10 p-5 shadow-lg backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#1bb9c1]/50 hover:!bg-white/15">
+
+                  <h4 className="flex items-center gap-2 text-lg font-bold !text-white">
+
+                    <ShieldCheck
+                      size={21}
+                      strokeWidth={2.5}
+                      className="!text-[#1bb9c1]"
+                    />
+
+                    <span className="!text-white">
+                      ISO 13485 & CE Compliance
+                    </span>
+
                   </h4>
-                  <p className="mt-2 text-xs text-[#E8D3BC]/80">
-                    Certified medical device quality management system for diagnostic analyzers.
+
+
+                  <p className="mt-2 text-xs leading-relaxed !text-[#d9f3f5]">
+                    Certified medical device quality management system for
+                    diagnostic analyzers.
                   </p>
+
                 </div>
 
-                <div className="rounded-2xl border border-[#E8D3BC]/20 bg-white/5 p-5 backdrop-blur-sm">
-                  <h4 className="text-lg font-bold text-white flex items-center gap-2">
-                    <Clock size={20} className="text-[#C05800]" />
-                    2-Hour SLA Maintenance
+
+                {/* SLA CARD */}
+
+                <div className="rounded-2xl border border-[#bfe8ea]/25 !bg-white/10 p-5 shadow-lg backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#1bb9c1]/50 hover:!bg-white/15">
+
+                  <h4 className="flex items-center gap-2 text-lg font-bold !text-white">
+
+                    <Clock
+                      size={21}
+                      strokeWidth={2.5}
+                      className="!text-[#1bb9c1]"
+                    />
+
+                    <span className="!text-white">
+                      2-Hour SLA Maintenance
+                    </span>
+
                   </h4>
-                  <p className="mt-2 text-xs text-[#E8D3BC]/80">
-                    Dedicated engineer dispatch team ready for emergency hospital repairs.
+
+
+                  <p className="mt-2 text-xs leading-relaxed !text-[#d9f3f5]">
+                    Dedicated engineer dispatch team ready for emergency
+                    hospital repairs.
                   </p>
+
                 </div>
+
               </div>
+
             </div>
+
+
+            {/* RIGHT */}
 
             <div className="lg:col-span-5">
-              <div className="rounded-3xl border border-[#E8D3BC]/30 bg-gradient-to-br from-white/10 to-white/5 p-8 backdrop-blur-md text-center">
-                <div className="mx-auto flex h-24 w-24 sm:h-28 sm:w-28 flex-col items-center justify-center rounded-full bg-gradient-to-br from-[#E06D00] via-[#C05800] to-[#8C3E00] text-white shadow-2xl shadow-[#C05800]/50 border-2 border-amber-300/40 p-2">
-                  <span className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-none">
+
+              <div className="rounded-3xl border border-[#bfe8ea]/30 !bg-white/10 p-8 text-center shadow-2xl backdrop-blur-md transition-all duration-300 hover:border-[#1bb9c1]/50 hover:!bg-white/15">
+
+
+                {/* CERTIFIED CIRCLE */}
+
+                <div className="mx-auto flex h-24 w-24 flex-col items-center justify-center rounded-full border-2 border-[#bfe8ea]/50 bg-gradient-to-br from-[#1bb9c1] via-[#007f86] to-[#00575b] p-2 !text-white shadow-2xl shadow-[#007f86]/50 sm:h-28 sm:w-28">
+
+                  <span className="text-3xl font-black leading-none tracking-tight !text-white sm:text-4xl">
                     100%
                   </span>
-                  <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#FDFBD4] mt-1">
+
+
+                  <span className="mt-1 text-[10px] font-bold uppercase tracking-wider !text-white sm:text-[11px]">
                     Certified
                   </span>
+
                 </div>
-                <h3 className="mt-6 text-2xl font-bold text-white">
+
+
+                <h3 className="mt-6 text-2xl font-bold !text-white">
                   Compliance Guarantee
                 </h3>
-                <p className="mt-3 text-sm text-[#E8D3BC] leading-relaxed">
-                  All instruments tested with traceable reference standards before dispatch to your medical facility.
+
+
+                <p className="mt-3 text-sm leading-relaxed !text-[#d9f3f5]">
+                  All instruments tested with traceable reference standards
+                  before dispatch to your medical facility.
                 </p>
+
+
                 <Link
-                  href={makeLink("/contact")}
-                  className="mt-6 inline-flex items-center justify-center gap-2 rounded-2xl bg-[#C05800] !text-white px-8 py-3.5 text-sm font-bold shadow-xl shadow-[#C05800]/40 transition-all hover:bg-[#E06D00] hover:shadow-2xl hover:-translate-y-0.5 border border-amber-400/30"
+                  href={makeLink(
+                    "/contact"
+                  )}
+                  className="group mt-6 inline-flex items-center justify-center gap-2 rounded-2xl border border-[#bfe8ea]/30 !bg-[#007f86] px-8 py-3.5 text-sm font-bold !text-white shadow-xl shadow-[#007f86]/40 transition-all duration-300 hover:-translate-y-0.5 hover:!bg-[#1bb9c1] hover:shadow-2xl"
                 >
-                  <span className="!text-white font-bold">Request Inspection Certificate</span>
-                  <ArrowRight size={16} className="!text-white" />
+
+                  <span className="font-bold !text-white">
+                    Request Inspection Certificate
+                  </span>
+
+
+                  <ArrowRight
+                    size={16}
+                    strokeWidth={2.5}
+                    className="!text-white transition-transform duration-300 group-hover:translate-x-1"
+                  />
+
                 </Link>
+
               </div>
+
             </div>
+
           </div>
+
         </div>
+
       </section>
 
-      {/* ================= TESTIMONIALS ================= */}
-      <section className="section-padding bg-gradient-to-b from-white via-[#FFF9EF] to-[#FDFBD4]">
+
+      {/* ========================================================
+          TESTIMONIALS
+      ======================================================== */}
+
+      <section className="section-padding bg-gradient-to-b from-white via-[#f5fcfd] to-[#eaf9fa]">
+
         <div className="container-custom">
+
           <SectionTitle
             badge="What Our Partners Say"
             title="Chosen by Diagnostic Teams"
@@ -468,91 +1216,208 @@ export default function Home({ city }) {
             center
           />
 
+
           <div className="mt-16 grid gap-8 lg:grid-cols-3">
-            {testimonials.map((t, idx) => (
-              <div
-                key={idx}
-                className="flex flex-col justify-between rounded-3xl border border-[#E8D3BC] bg-white p-8 shadow-md transition-all hover:-translate-y-1 hover:shadow-xl"
-              >
-                <div>
-                  <div className="flex gap-1 text-[#C05800] mb-4">
-                    {Array.from({ length: t.rating }).map((_, i) => (
-                      <span key={i}>★</span>
-                    ))}
+
+            {testimonials.map(
+              (t, idx) => (
+
+                <div
+                  key={idx}
+                  className="flex flex-col justify-between rounded-3xl border border-[#bfe8ea] bg-white p-8 shadow-md transition-all hover:-translate-y-1 hover:shadow-xl"
+                >
+
+                  <div>
+
+                    <div className="mb-4 flex gap-1 !text-[#007f86]">
+
+                      {Array.from({
+                        length: t.rating,
+                      }).map(
+                        (_, i) => (
+                          <span
+                            key={i}
+                          >
+                            ★
+                          </span>
+                        )
+                      )}
+
+                    </div>
+
+
+                    <p className="text-sm italic leading-relaxed !text-[#12383a] sm:text-base">
+                      "{t.quote}"
+                    </p>
+
                   </div>
-                  <p className="text-sm sm:text-base leading-relaxed text-[#5B4634] italic">
-                    "{t.quote}"
-                  </p>
+
+
+                  <div className="mt-8 flex items-center gap-3 border-t border-[#bfe8ea]/60 pt-4">
+
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full !bg-[#d9f3f5] text-lg font-bold !text-[#007f86]">
+                      {t.author.charAt(4) || "D"}
+                    </div>
+
+
+                    <div>
+
+                      <h4 className="text-base font-bold !text-[#12383a]">
+                        {t.author}
+                      </h4>
+
+
+                      <p className="text-xs !text-[#12383a]">
+
+                        {t.role}
+
+                        {" — "}
+
+                        <span className="font-medium !text-[#007f86]">
+                          {t.institution}
+                        </span>
+
+                      </p>
+
+                    </div>
+
+                  </div>
+
                 </div>
 
-                <div className="mt-8 border-t border-[#E8D3BC]/60 pt-4 flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F3E4D2] text-[#C05800] font-bold text-lg">
-                    {t.author.charAt(4) || "D"}
-                  </div>
-                  <div>
-                    <h4 className="text-base font-bold text-[#38240D]">{t.author}</h4>
-                    <p className="text-xs text-[#5B4634]">{t.role} — <span className="text-[#C05800] font-medium">{t.institution}</span></p>
-                  </div>
-                </div>
-              </div>
-            ))}
+              )
+            )}
+
           </div>
+
         </div>
+
       </section>
 
-      {/* ================= QUICK INQUIRY FORM SECTION ================= */}
-      <section className="section-padding bg-gradient-to-br from-[#FDFBD4] via-white to-[#F3E4D2] border-t border-[#E8D3BC]">
+
+      {/* ========================================================
+          QUICK INQUIRY
+      ======================================================== */}
+
+      <section className="section-padding border-t border-[#bfe8ea] bg-gradient-to-br from-[#eaf9fa] via-white to-[#d9f3f5]">
+
         <div className="container-custom">
-          <div className="grid lg:grid-cols-12 gap-12 items-center">
+
+          <div className="grid items-center gap-12 lg:grid-cols-12">
+
+
+            {/* LEFT */}
+
             <div className="lg:col-span-5">
+
               <SectionTitle
                 badge="Direct Consultation"
                 title="Planning a Purchase or Need Technical Guidance?"
                 description="Our biomedical engineering consultants will analyze your laboratory requirements, recommend optimal instruments, and provide a customized quote."
               />
 
+
               <div className="mt-8 space-y-4">
+
+
+                {/* PHONE */}
+
                 {helplinePhone && (
+
                   <a
-                    href={`tel:${String(helplinePhone).replace(/\s+/g, "")}`}
-                    className="flex items-center gap-4 rounded-2xl border border-[#E8D3BC] bg-white p-4 shadow-sm hover:border-[#C05800]/40 transition-colors"
+                    href={`tel:${String(
+                      helplinePhone
+                    ).replace(
+                      /\s+/g,
+                      ""
+                    )}`}
+                    className="flex items-center gap-4 rounded-2xl border border-[#bfe8ea] bg-white p-4 shadow-sm transition-colors hover:border-[#007f86]/40"
                   >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F3E4D2] text-[#C05800] shrink-0">
-                      <PhoneCall size={22} />
+
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl !bg-[#d9f3f5] !text-[#007f86]">
+
+                      <PhoneCall
+                        size={22}
+                      />
+
                     </div>
+
+
                     <div>
-                      <p className="text-xs font-bold text-[#5B4634]">Direct Helpline</p>
-                      <p className="text-base font-bold text-[#38240D]">{helplinePhone}</p>
+
+                      <p className="text-xs font-bold !text-[#12383a]">
+                        Direct Helpline
+                      </p>
+
+
+                      <p className="text-base font-bold !text-[#12383a]">
+                        {helplinePhone}
+                      </p>
+
                     </div>
+
                   </a>
+
                 )}
+
+
+                {/* EMAIL */}
 
                 {supportEmail && (
+
                   <a
                     href={`mailto:${supportEmail}`}
-                    className="flex items-center gap-4 rounded-2xl border border-[#E8D3BC] bg-white p-4 shadow-sm hover:border-[#C05800]/40 transition-colors"
+                    className="flex items-center gap-4 rounded-2xl border border-[#bfe8ea] bg-white p-4 shadow-sm transition-colors hover:border-[#007f86]/40"
                   >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F3E4D2] text-[#C05800] shrink-0">
-                      <Mail size={22} />
+
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl !bg-[#d9f3f5] !text-[#007f86]">
+
+                      <Mail
+                        size={22}
+                      />
+
                     </div>
+
+
                     <div>
-                      <p className="text-xs font-bold text-[#5B4634]">Official Email</p>
-                      <p className="text-base font-bold text-[#38240D] break-all">{supportEmail}</p>
+
+                      <p className="text-xs font-bold !text-[#12383a]">
+                        Official Email
+                      </p>
+
+
+                      <p className="break-all text-base font-bold !text-[#12383a]">
+                        {supportEmail}
+                      </p>
+
                     </div>
+
                   </a>
+
                 )}
+
               </div>
+
             </div>
 
+
+            {/* RIGHT */}
+
             <div className="lg:col-span-7">
+
               <ContactForm
                 title="Request a Tailored Equipment Plan"
                 subtitle="Fill out the form below and our equipment specialist will reach out within 2 hours."
               />
+
             </div>
+
           </div>
+
         </div>
+
       </section>
+
     </div>
   );
 }
