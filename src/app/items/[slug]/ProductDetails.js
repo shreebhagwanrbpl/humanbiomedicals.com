@@ -16,13 +16,8 @@ import {
     FaLink,
 } from "react-icons/fa";
 
-import {
-    doc,
-    getDoc,
-    addDoc,
-    collection,
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { fetchContactData } from "@/lib/data-fetcher";
+import { parseContactInfo } from "@/lib/contact-parser";
 
 const loadImageBase64 = async (src) => {
     try {
@@ -335,19 +330,21 @@ export default function ProductDetails({ slug }) {
     }, [slug]);
 
     useEffect(() => {
+        let isMounted = true;
         const loadContact = async () => {
             try {
-                const snap = await getDoc(
-                    doc(db, "websites", "humanbiomedicalscom", "pages", "contact")
-                );
-                if (snap.exists()) {
-                    setContactInfo(snap.data().contactInfo || []);
+                const data = await fetchContactData();
+                if (isMounted && Array.isArray(data)) {
+                    setContactInfo(data);
                 }
             } catch (err) {
                 console.error("Error loading contact info in details:", err);
             }
         };
         loadContact();
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     const handleDownloadBrochure = async () => {
@@ -411,7 +408,7 @@ export default function ProductDetails({ slug }) {
             pdfDoc.setFont("helvetica", "bold");
             pdfDoc.setFontSize(16);
             pdfDoc.setTextColor(colorPrimary[0], colorPrimary[1], colorPrimary[2]);
-            pdfDoc.text("Raj Biosis Private Limited", headerLeftOffset, 20);
+            pdfDoc.text("Human Biomedicals", headerLeftOffset, 20);
 
             pdfDoc.setFont("helvetica", "normal");
             pdfDoc.setFontSize(8.5);
@@ -423,27 +420,17 @@ export default function ProductDetails({ slug }) {
             pdfDoc.setTextColor(colorDark[0], colorDark[1], colorDark[2]);
 
             const websiteText = getWebsiteDomain();
-
-            const phoneItems = contactInfo.filter((item) => {
-                const l = (item?.label || "").toLowerCase();
-                return l.includes("phone") || l.includes("mobile") || l.includes("tel") || l.includes("contact");
-            });
-            const rawPhones = phoneItems.flatMap((i) => (Array.isArray(i.value) ? i.value : [i.value])).filter(Boolean);
-            const phoneString = rawPhones.length > 0 ? rawPhones.slice(0, 2).join(", ") : "+91 8318368383, +91 9983123469";
-
-            const emailItem = contactInfo.find((item) => {
-                const l = (item?.label || "").toLowerCase();
-                return l.includes("email") || l.includes("mail");
-            });
-            const emailText = emailItem
-                ? Array.isArray(emailItem.value)
-                    ? emailItem.value[0]
-                    : emailItem.value
-                : "mail@rajbiosis.com";
+            const { phones, emails } = parseContactInfo(contactInfo);
+            const phoneString = phones.length > 0 ? phones.slice(0, 2).join(", ") : "";
+            const emailText = emails.length > 0 ? emails[0] : "";
 
             pdfDoc.text(`Website: ${websiteText}`, 135, 19);
-            pdfDoc.text(`Email: ${emailText}`, 135, 24);
-            pdfDoc.text(`Phone: ${phoneString}`, 135, 29);
+            if (emailText) {
+                pdfDoc.text(`Email: ${emailText}`, 135, 24);
+            }
+            if (phoneString) {
+                pdfDoc.text(`Phone: ${phoneString}`, 135, 29);
+            }
 
             pdfDoc.setDrawColor(colorLightBorder[0], colorLightBorder[1], colorLightBorder[2]);
             pdfDoc.setLineWidth(0.6);
@@ -570,7 +557,7 @@ export default function ProductDetails({ slug }) {
             pdfDoc.setFontSize(7.5);
             pdfDoc.setTextColor(colorGray[0], colorGray[1], colorGray[2]);
             pdfDoc.text(
-                "Raj Biosis Private Limited | NABL-Traceable Calibration • 24/7 SLA Engineering Support",
+                "Human Biomedicals | NABL-Traceable Calibration • 24/7 SLA Engineering Support",
                 pageWidth / 2,
                 pageHeight - 9,
                 { align: "center" }
@@ -614,22 +601,26 @@ export default function ProductDetails({ slug }) {
         try {
             setSubmitting(true);
 
-            await addDoc(
-                collection(
-                    db,
-                    "websitesQueries",
-                    "humanbiomedicalscom",
-                    "productQueries"
-                ),
-                {
-                    ...form,
-                    productName: product.title,
-                    productSlug: product.slug,
-                    brand: product.brand || "",
-                    model: product.model || "",
-                    createdAt: new Date(),
-                }
-            );
+            const res = await fetch("/api/product-query", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                },
+                body: JSON.stringify({
+                    name: form.name.trim(),
+                    email: form.email.trim(),
+                    phone: form.phone.trim(),
+                    productName: product?.title || "",
+                    productSlug: product?.slug || slug || "",
+                    brand: product?.brand || "",
+                    model: product?.model || "",
+                }),
+            });
+
+            if (!res.ok) {
+                throw new Error(`Server responded with ${res.status}`);
+            }
 
             toast.success(
                 "Your enquiry has been submitted successfully."
@@ -641,9 +632,9 @@ export default function ProductDetails({ slug }) {
                 phone: "",
             });
         } catch (error) {
-            console.error(error);
+            console.error("Error submitting product enquiry:", error);
             toast.error(
-                "Something went wrong"
+                "Failed to submit enquiry. Please try again or call directly."
             );
         } finally {
             setSubmitting(false);
@@ -661,7 +652,7 @@ export default function ProductDetails({ slug }) {
                 product.title,
             brand: {
                 "@type": "Brand",
-                name: product.brand || "Rajbiosis Private Limited ",
+                name: product.brand || "Human Biomedicals",
             },
         }
         : null;
@@ -698,16 +689,18 @@ export default function ProductDetails({ slug }) {
     };
 
     const handleWhatsapp = () => {
+        const { whatsappPhone } = parseContactInfo(contactInfo);
         const shareText = `🔬 ${product?.title}
 
-${product?.desc}
+${product?.desc || product?.description || ""}
 
 🌐 ${window.location.href}`;
 
-        window.open(
-            `https://wa.me/?text=${encodeURIComponent(shareText)}`,
-            "_blank"
-        );
+        const waUrl = whatsappPhone
+            ? `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(shareText)}`
+            : `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+
+        window.open(waUrl, "_blank");
     };
 
     const handleFacebook = () => {
@@ -1057,8 +1050,8 @@ ${product?.desc}
                     <div className="mt-6 grid gap-5 md:grid-cols-2">
                         {[
                             {
-                                title: `Why Choose Raj Biosis in ${cityName}?`,
-                                content: `Raj Biosis Private Limited is a trusted supplier and distributor of ${product.title} in ${cityName}. We provide biomedical and laboratory equipment for hospitals, pathology laboratories, diagnostic centres and healthcare facilities.`,
+                                title: `Why Choose Human Biomedicals in ${cityName}?`,
+                                content: `Human Biomedicals is a trusted supplier and distributor of ${product.title} in ${cityName}. We provide biomedical and laboratory equipment for hospitals, pathology laboratories, diagnostic centres and healthcare facilities.`,
                             },
                             {
                                 title: `Features of ${product.title}`,
@@ -1070,7 +1063,7 @@ ${product?.desc}
                             },
                             {
                                 title: `${product.title} Supplier in ${cityName}`,
-                                content: `Raj Biosis supplies ${product.title} in ${cityName} with expert consultation, installation support, technical guidance and dependable after-sales service.`,
+                                content: `Human Biomedicals supplies ${product.title} in ${cityName} with expert consultation, installation support, technical guidance and dependable after-sales service.`,
                             },
                             {
                                 title: `${product.title} Dealer in ${cityName}`,
@@ -1082,7 +1075,7 @@ ${product?.desc}
                             },
                             {
                                 title: `Buy ${product.title} in ${cityName}`,
-                                content: `Purchase ${product.title} in ${cityName} from Raj Biosis with genuine products, competitive pricing and nationwide support.`,
+                                content: `Purchase ${product.title} in ${cityName} from Human Biomedicals with genuine products, competitive pricing and nationwide support.`,
                             },
                             {
                                 title: `${product.title} Price in ${cityName}`,

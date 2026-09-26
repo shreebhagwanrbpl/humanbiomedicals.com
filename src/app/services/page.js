@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { fetchServicesData, fetchContactData } from "@/lib/data-fetcher";
+import { parseContactInfo } from "@/lib/contact-parser";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -66,7 +66,7 @@ export default function ServicesPage() {
 
   // =========================================================
   // SERVICES
-  // ONLY ADMIN / FIREBASE DATA
+  // ONLY SQLITE ADMIN DATA
   // NO STATIC FALLBACK
   // =========================================================
 
@@ -171,177 +171,65 @@ export default function ServicesPage() {
 
 
   // =========================================================
-  // FIREBASE DATA
+  // DYNAMIC DATA (SQLITE ADMIN API)
   // =========================================================
 
   useEffect(() => {
+    let isMounted = true;
 
     const fetchServicesAndContact = async () => {
-
       try {
+        const [servicesRes, contactRes] = await Promise.all([
+          fetchServicesData().catch(() => []),
+          fetchContactData().catch(() => []),
+        ]);
 
-        // =====================================================
-        // SERVICES
-        // ADMIN / FIREBASE ONLY
-        // =====================================================
+        if (isMounted) {
+          if (Array.isArray(servicesRes)) {
+            const dbServices = servicesRes
+              .map((service, index) => ({
+                id: service?.id || `service-${index}`,
+                title: typeof service?.title === "string" ? service.title.trim() : "",
+                desc: typeof service?.desc === "string" ? service.desc.trim() : "",
+              }))
+              .filter((service) => service.title && service.desc);
+            setServices(dbServices);
+          } else {
+            setServices([]);
+          }
 
-        const servicesSnap = await getDoc(
-          doc(
-            db,
-            "websites",
-            "humanbiomedicalscom",
-            "pages",
-            "services"
-          )
-        );
-
-
-        if (servicesSnap.exists()) {
-
-          const data = servicesSnap.data();
-
-
-          const dbServices =
-            Array.isArray(data?.services)
-              ? data.services
-                .map((service, index) => ({
-                  id:
-                    service?.id ||
-                    `service-${index}`,
-
-                  title:
-                    typeof service?.title === "string"
-                      ? service.title.trim()
-                      : "",
-
-                  desc:
-                    typeof service?.desc === "string"
-                      ? service.desc.trim()
-                      : "",
-                }))
-                .filter(
-                  (service) =>
-                    service.title &&
-                    service.desc
-                )
-              : [];
-
-
-          // Firebase/Admin data only
-          setServices(dbServices);
-
-        } else {
-
-          // Document nahi mila
-          // Static fallback bilkul nahi
-          setServices([]);
-
+          if (Array.isArray(contactRes)) {
+            setContactInfo(contactRes);
+          } else {
+            setContactInfo([]);
+          }
         }
-
-
-        // =====================================================
-        // CONTACT
-        // =====================================================
-
-        const contactSnap = await getDoc(
-          doc(
-            db,
-            "websites",
-            "humanbiomedicalscom",
-            "pages",
-            "contact"
-          )
-        );
-
-
-        if (contactSnap.exists()) {
-
-          const contactData =
-            contactSnap.data();
-
-
-          setContactInfo(
-            Array.isArray(
-              contactData?.contactInfo
-            )
-              ? contactData.contactInfo
-              : []
-          );
-
-        } else {
-
-          setContactInfo([]);
-
-        }
-
       } catch (error) {
-
-        console.error(
-          "Error loading services/contact data:",
-          error
-        );
-
-
-        // Error hone par bhi fallback nahi
-        setServices([]);
-
-        setContactInfo([]);
-
+        console.error("Error loading services/contact data:", error);
+        if (isMounted) {
+          setServices([]);
+          setContactInfo([]);
+        }
       } finally {
-
-        setLoading(false);
-
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-
     };
-
 
     fetchServicesAndContact();
 
+    return () => {
+      isMounted = false;
+    };
   }, []);
-
 
   // =========================================================
   // DYNAMIC EMERGENCY PHONE
   // =========================================================
 
-  const emergencyPhone = (() => {
-
-    const item = contactInfo.find((c) => {
-
-      const label =
-        (c?.label || "").toLowerCase();
-
-
-      return (
-        label.includes("phone") ||
-        label.includes("mobile") ||
-        label.includes("helpline") ||
-        label.includes("emergency") ||
-        label.includes("tel") ||
-        label.includes("contact")
-      );
-
-    });
-
-
-    if (!item) {
-      return "";
-    }
-
-
-    if (Array.isArray(item.value)) {
-
-      return item.value[0] || "";
-
-    }
-
-
-    return typeof item.value === "string"
-      ? item.value.trim()
-      : "";
-
-  })();
+  const { phones: dynamicPhones } = parseContactInfo(contactInfo);
+  const emergencyPhone = dynamicPhones[0] || "";
 
 
   // =========================================================
@@ -419,7 +307,7 @@ export default function ServicesPage() {
 
             {/* =================================================
                 DYNAMIC SERVICES
-                ADMIN / FIREBASE ONLY
+                SQLITE ADMIN ONLY
             ================================================= */}
 
             {!loading &&

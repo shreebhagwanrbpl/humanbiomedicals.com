@@ -1,140 +1,63 @@
-import { db } from "@/lib/firebase";
-import {
-    collection,
-    getDocs,
-    doc,
-    getDoc,
-} from "firebase/firestore";
+import { fetchFullCatalogData, getDistrictsList } from "@/lib/db-server";
+
+export const dynamic = "force-dynamic";
 
 export default async function sitemap() {
-    const baseUrl =
-        "https://humanbiomedicals.com";
+  const baseUrl = "https://humanbiomedicals.com";
+  const urls = [];
 
-    const urls = [];
+  // Static Pages
+  urls.push(
+    { url: baseUrl, lastModified: new Date() },
+    { url: `${baseUrl}/about`, lastModified: new Date() },
+    { url: `${baseUrl}/services`, lastModified: new Date() },
+    { url: `${baseUrl}/contact`, lastModified: new Date() },
+    { url: `${baseUrl}/items`, lastModified: new Date() }
+  );
 
-    // Static Pages
-    urls.push(
-        {
-            url: baseUrl,
-            lastModified: new Date(),
-        },
-        {
-            url: `${baseUrl}/about`,
-            lastModified: new Date(),
-        },
-        {
-            url: `${baseUrl}/services`,
-            lastModified: new Date(),
-        },
-        {
-            url: `${baseUrl}/contact`,
-            lastModified: new Date(),
-        },
-        {
-            url: `${baseUrl}/items`,
-            lastModified: new Date(),
-        }
-    );
+  try {
+    const [catalogData, districtsList] = await Promise.all([
+      fetchFullCatalogData().catch(() => ({ categoryProducts: [] })),
+      getDistrictsList().catch(() => []),
+    ]);
 
-    try {
-        // DISTRICTS
-        const districtSnap =
-            await getDocs(
-                collection(
-                    db,
-                    "websites",
-                    "humanbiomedicalscom",
-                    "districts"
-                )
-            );
+    const districts = Array.isArray(districtsList) ? districtsList : [];
+    const products = Array.isArray(catalogData?.categoryProducts) ? catalogData.categoryProducts : [];
 
-        const districts =
-            districtSnap.docs.map(
-                (doc) => doc.data()
-            );
+    // District Pages
+    districts.forEach((districtSlug) => {
+      if (!districtSlug) return;
 
-        districts.forEach((district) => {
-            const slug =
-                district.slug;
+      urls.push(
+        { url: `${baseUrl}/${districtSlug}`, lastModified: new Date() },
+        { url: `${baseUrl}/${districtSlug}/about`, lastModified: new Date() },
+        { url: `${baseUrl}/${districtSlug}/services`, lastModified: new Date() },
+        { url: `${baseUrl}/${districtSlug}/contact`, lastModified: new Date() },
+        { url: `${baseUrl}/${districtSlug}/items`, lastModified: new Date() }
+      );
+    });
 
-            if (!slug) return;
+    // Products Pages
+    products.forEach((product) => {
+      if (!product.slug) return;
 
-            urls.push(
-                {
-                    url: `${baseUrl}/${slug}`,
-                    lastModified:
-                        new Date(),
-                },
-                {
-                    url: `${baseUrl}/${slug}/about`,
-                    lastModified:
-                        new Date(),
-                },
-                {
-                    url: `${baseUrl}/${slug}/services`,
-                    lastModified:
-                        new Date(),
-                },
-                {
-                    url: `${baseUrl}/${slug}/contact`,
-                    lastModified:
-                        new Date(),
-                },
-                {
-                    url: `${baseUrl}/${slug}/items`,
-                    lastModified:
-                        new Date(),
-                }
-            );
+      urls.push({
+        url: `${baseUrl}/items/${product.slug}`,
+        lastModified: new Date(),
+      });
+
+      // District Product URLs
+      districts.forEach((districtSlug) => {
+        if (!districtSlug) return;
+        urls.push({
+          url: `${baseUrl}/${districtSlug}/items/${product.slug}`,
+          lastModified: new Date(),
         });
+      });
+    });
+  } catch (error) {
+    console.error("[sitemap] Error generating sitemap:", error);
+  }
 
-        // PRODUCTS
-        const productDoc =
-            await getDoc(
-                doc(
-                    db,
-                    "websites",
-                    "humanbiomedicalscom",
-                    "pages",
-                    "products"
-                )
-            );
-
-        const products =
-            productDoc.data()
-                ?.products || [];
-
-        products.forEach(
-            (product) => {
-                if (!product.slug) return;
-
-                // Main Product URL
-                urls.push({
-                    url: `${baseUrl}/items/${product.slug}`,
-                    lastModified:
-                        new Date(),
-                });
-
-                // District Product URLs
-                districts.forEach(
-                    (district) => {
-                        if (!district.slug) return;
-
-                        urls.push({
-                            url: `${baseUrl}/${district.slug}/items/${product.slug}`,
-                            lastModified:
-                                new Date(),
-                        });
-                    }
-                );
-            }
-        );
-    } catch (error) {
-        console.error(
-            "Sitemap Error:",
-            error
-        );
-    }
-
-    return urls;
+  return urls;
 }

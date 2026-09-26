@@ -4,9 +4,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { motion } from "framer-motion";
+import {
+  fetchHomeData,
+  fetchContactData,
+  fetchServicesData,
+  fetchDistrictData,
+} from "@/lib/data-fetcher";
+import { parseContactInfo } from "@/lib/contact-parser";
 
 import {
   Microscope,
@@ -34,7 +39,6 @@ import ProductCard from "@/components/ProductCard";
 import ContactForm from "@/components/ContactForm";
 import HeroCarousel from "@/components/HeroCarousel";
 
-import { fallbackProducts } from "@/data/productsData";
 import { fetchAllDynamicProducts } from "@/lib/fetchProducts";
 
 
@@ -109,7 +113,7 @@ const pillars = [
 const testimonials = [
   {
     quote:
-      "Raj Biosis transformed our central laboratory setup. Their automated analyzers increased our daily sample throughput by 40% with zero downtime.",
+      "Human Biomedicals transformed our central laboratory setup. Their automated analyzers increased our daily sample throughput by 40% with zero downtime.",
     author: "Dr. Arvind Sharma",
     role: "Chief Pathologist",
     institution: "Apollo Diagnostics Center",
@@ -138,7 +142,7 @@ export default function Home({ city }) {
 
   // ============================================================
   // SERVICES
-  // ADMIN / FIREBASE ONLY
+  // SQLITE ADMIN ONLY
   // NO STATIC FALLBACK
   // ============================================================
 
@@ -147,11 +151,10 @@ export default function Home({ city }) {
 
   // ============================================================
   // PRODUCTS
-  // Existing product behavior kept
+  // ONLY DYNAMIC PRODUCTS - NO STATIC FALLBACK
   // ============================================================
 
-  const [products, setProducts] =
-    useState(fallbackProducts);
+  const [products, setProducts] = useState([]);
 
 
   const [homeData, setHomeData] =
@@ -217,266 +220,73 @@ export default function Home({ city }) {
 
 
   // ============================================================
-  // FIREBASE DATA
+  // DYNAMIC DATA (SQLITE ADMIN API)
   // ============================================================
 
   useEffect(() => {
+    let isMounted = true;
 
     const fetchData = async () => {
-
       try {
+        const [homeRes, contactRes, servicesRes, prodsRes, distRes] = await Promise.all([
+          fetchHomeData().catch(() => null),
+          fetchContactData().catch(() => []),
+          fetchServicesData().catch(() => []),
+          fetchAllDynamicProducts().catch(() => []),
+          district ? fetchDistrictData(district).catch(() => null) : Promise.resolve(null),
+        ]);
 
-        // ======================================================
-        // HOME DATA
-        // ======================================================
-
-        try {
-
-          const homeSnap = await getDoc(
-            doc(
-              db,
-              "websites",
-              "humanbiomedicalscom",
-              "pages",
-              "home"
-            )
-          );
-
-
-          if (homeSnap.exists()) {
-
-            setHomeData(
-              homeSnap.data()
-            );
-
+        if (isMounted) {
+          if (homeRes) {
+            setHomeData(homeRes);
           } else {
-
             setHomeData(null);
-
           }
 
-        } catch (homeErr) {
-
-          console.error(
-            "Error fetching home data:",
-            homeErr
-          );
-
-          setHomeData(null);
-
-        }
-
-
-        // ======================================================
-        // CONTACT DATA
-        // ======================================================
-
-        try {
-
-          const contactSnap = await getDoc(
-            doc(
-              db,
-              "websites",
-              "humanbiomedicalscom",
-              "pages",
-              "contact"
-            )
-          );
-
-
-          if (contactSnap.exists()) {
-
-            const contactData =
-              contactSnap.data();
-
-
-            setContactInfo(
-              Array.isArray(
-                contactData?.contactInfo
-              )
-                ? contactData.contactInfo
-                : []
-            );
-
+          if (Array.isArray(contactRes)) {
+            setContactInfo(contactRes);
           } else {
-
             setContactInfo([]);
-
           }
 
-        } catch (contactErr) {
-
-          console.error(
-            "Error fetching contact data:",
-            contactErr
-          );
-
-          setContactInfo([]);
-
-        }
-
-
-        // ======================================================
-        // SERVICES
-        // ADMIN / FIREBASE ONLY
-        // ======================================================
-        //
-        // Admin me jo save ho raha hai:
-        //
-        // title
-        // desc
-        //
-        // wahi dynamic show hoga.
-        //
-        // fallbackServices bilkul use nahi hoga.
-        // ======================================================
-
-        try {
-
-          const serviceSnap =
-            await getDoc(
-              doc(
-                db,
-                "websites",
-                "humanbiomedicalscom",
-                "pages",
-                "services"
-              )
-            );
-
-
-          if (serviceSnap.exists()) {
-
-            const data =
-              serviceSnap.data();
-
-
-            const dbServices =
-              Array.isArray(
-                data?.services
-              )
-                ? data.services
-                  .map(
-                    (
-                      service,
-                      index
-                    ) => ({
-
-                      id:
-                        service?.id ||
-                        `service-${index}`,
-
-                      title:
-                        typeof service?.title ===
-                          "string"
-                          ? service.title.trim()
-                          : "",
-
-                      desc:
-                        typeof service?.desc ===
-                          "string"
-                          ? service.desc.trim()
-                          : "",
-
-                    })
-                  )
-                  .filter(
-                    (service) =>
-                      service.title &&
-                      service.desc
-                  )
-                : [];
-
-
-            // Firebase data only
-            setServices(
-              dbServices
-            );
-
+          if (Array.isArray(servicesRes)) {
+            const dbServices = servicesRes
+              .map((service, index) => ({
+                id: service?.id || `service-${index}`,
+                title: typeof service?.title === "string" ? service.title.trim() : "",
+                desc: typeof service?.desc === "string" ? service.desc.trim() : "",
+              }))
+              .filter((service) => service.title && service.desc);
+            setServices(dbServices);
           } else {
-
-            // No Firebase document
             setServices([]);
-
           }
 
-        } catch (serviceErr) {
-
-          console.error(
-            "Error fetching services:",
-            serviceErr
-          );
-
-
-          // No fallback
-          setServices([]);
-
-        }
-
-
-        // ======================================================
-        // PRODUCTS
-        // ======================================================
-
-        try {
-
-          const fetchedProducts =
-            await fetchAllDynamicProducts();
-
-
-          if (
-            fetchedProducts &&
-            fetchedProducts.length > 0
-          ) {
-
-            setProducts(
-              fetchedProducts
-            );
-
+          if (Array.isArray(prodsRes)) {
+            setProducts(prodsRes);
           } else {
-
-            setProducts(
-              fallbackProducts
-            );
-
+            setProducts([]);
           }
-
-        } catch (productErr) {
-
-          console.error(
-            "Error fetching products:",
-            productErr
-          );
-
-          // Existing product fallback retained
-          setProducts(
-            fallbackProducts
-          );
-
         }
-
       } catch (err) {
-
-        console.error(
-          "Error loading home data:",
-          err
-        );
-
-        // Services never fallback
-        setServices([]);
-
+        console.error("Error loading home data:", err);
+        if (isMounted) {
+          setServices([]);
+          setProducts([]);
+        }
       } finally {
-
-        setLoading(false);
-
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-
     };
-
 
     fetchData();
 
-  }, []);
+    return () => {
+      isMounted = false;
+    };
+  }, [district]);
 
 
   // ============================================================
@@ -527,109 +337,12 @@ export default function Home({ city }) {
 
 
   // ============================================================
-  // HELPLINE PHONE
+  // HELPLINE PHONE & SUPPORT EMAIL (DYNAMIC)
   // ============================================================
 
-  const helplinePhone =
-    (() => {
-
-      const item =
-        contactInfo.find(
-          (c) => {
-
-            const label =
-              c?.label?.toLowerCase() ||
-              "";
-
-
-            return (
-              label.includes("phone") ||
-              label.includes("mobile") ||
-              label.includes("helpline") ||
-              label.includes("contact")
-            );
-
-          }
-        );
-
-
-      if (!item) {
-        return "";
-      }
-
-
-      if (
-        Array.isArray(
-          item.value
-        )
-      ) {
-
-        return (
-          item.value[0] ||
-          ""
-        );
-
-      }
-
-
-      return typeof item.value ===
-        "string"
-        ? item.value.trim()
-        : "";
-
-    })();
-
-
-  // ============================================================
-  // SUPPORT EMAIL
-  // ============================================================
-
-  const supportEmail =
-    (() => {
-
-      const item =
-        contactInfo.find(
-          (c) => {
-
-            const label =
-              c?.label?.toLowerCase() ||
-              "";
-
-
-            return (
-              label.includes("email") ||
-              label.includes("mail")
-            );
-
-          }
-        );
-
-
-      if (!item) {
-        return "";
-      }
-
-
-      if (
-        Array.isArray(
-          item.value
-        )
-      ) {
-
-        return (
-          item.value[0] ||
-          ""
-        );
-
-      }
-
-
-      return typeof item.value ===
-        "string"
-        ? item.value.trim()
-        : "";
-
-    })();
+  const { phones: dynamicPhones, emails: dynamicEmails } = parseContactInfo(contactInfo);
+  const helplinePhone = dynamicPhones[0] || "";
+  const supportEmail = dynamicEmails[0] || "";
 
 
   return (
@@ -924,7 +637,7 @@ export default function Home({ city }) {
 
             {/* ==================================================
                 DYNAMIC SERVICES
-                ADMIN / FIREBASE ONLY
+                SQLITE ADMIN ONLY
             ================================================== */}
 
             {!loading &&
@@ -1069,7 +782,7 @@ export default function Home({ city }) {
 
 
               <p className="mt-5 max-w-3xl text-base leading-relaxed !text-[#d9f3f5] sm:text-lg">
-                Raj Biosis strictly adheres to international quality protocols.
+                Human Biomedicals strictly adheres to international quality protocols.
                 Every equipment installation comes with complete IQ/OQ/PQ
                 validation documentation and certified calibration reports.
               </p>
@@ -1212,7 +925,7 @@ export default function Home({ city }) {
           <SectionTitle
             badge="What Our Partners Say"
             title="Chosen by Diagnostic Teams"
-            description="Read how healthcare professionals rely onRaj Biosisfor accurate diagnostics and uninterrupted equipment uptime."
+            description="Read how healthcare professionals rely on Human Biomedicals for accurate diagnostics and uninterrupted equipment uptime."
             center
           />
 

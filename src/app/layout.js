@@ -10,10 +10,10 @@ export const metadata = {
   ),
 
   title:
-    "Raj Biosis | Biomedical & Diagnostic Equipment",
+    "Human Biomedicals | Biomedical & Diagnostic Equipment",
 
   description:
-    "Raj Biosis Private Limited  supplies CBC Machines, Hematology Analyzers, Biochemistry Analyzers, ELISA Readers and laboratory equipment across India.",
+    "Human Biomedicals supplies CBC Machines, Hematology Analyzers, Biochemistry Analyzers, ELISA Readers and laboratory equipment across India.",
 
   keywords: [
     "Biomedical Equipment Supplier",
@@ -23,27 +23,26 @@ export const metadata = {
     "Biochemistry Analyzer Supplier",
     "Diagnostic Equipment Supplier",
     "Medical Equipment Supplier India",
-    "Raj Biosis",
-    "Raj Biosis",
+    "Human Biomedicals",
   ],
 
   openGraph: {
     title:
-      "Raj Biosis | Biomedical & Diagnostic Equipment",
+      "Human Biomedicals | Biomedical & Diagnostic Equipment",
 
     description:
       "Fluid, modern interface cues inspired by clean-room environments and precision systems.",
 
     url: "https://humanbiomedicals.com",
 
-    siteName: "Raj Biosis Private Limited",
+    siteName: "Human Biomedicals",
 
     images: [
       {
         url: "/logo.png",
         width: 1200,
         height: 630,
-        alt: "Raj Biosis Private Limited",
+        alt: "Human Biomedicals",
       },
     ],
 
@@ -55,7 +54,7 @@ export const metadata = {
     card: "summary_large_image",
 
     title:
-      "Raj Biosis | Biomedical & Diagnostic Equipment",
+      "Human Biomedicals | Biomedical & Diagnostic Equipment",
 
     description:
       "Fluid, modern interface cues inspired by clean-room environments and precision systems.",

@@ -2,11 +2,11 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import PageBanner from "@/components/PageBanner";
 import SectionTitle from "@/components/SectionTitle";
 import ContactForm from "@/components/ContactForm";
+import { fetchContactData, fetchDistrictData } from "@/lib/data-fetcher";
+import { parseContactInfo } from "@/lib/contact-parser";
 import {
   Mail,
   Phone,
@@ -55,40 +55,34 @@ export default function ContactPage() {
       : null;
 
   useEffect(() => {
-    const loadContact = async () => {
+    let isMounted = true;
+    const loadData = async () => {
       try {
-        const snap = await getDoc(
-          doc(db, "websites", "humanbiomedicalscom", "pages", "contact")
-        );
-        if (snap.exists()) {
-          setContactInfo(snap.data().contactInfo || []);
+        const [contactRes, distRes] = await Promise.all([
+          fetchContactData(),
+          currentDistrict ? fetchDistrictData(currentDistrict) : Promise.resolve(null),
+        ]);
+
+        if (isMounted) {
+          if (Array.isArray(contactRes)) {
+            setContactInfo(contactRes);
+          }
+          if (distRes) {
+            setDistrictData(distRes);
+          }
         }
       } catch (err) {
-        console.error("Error loading contact data:", err);
+        console.error("Error loading contact page data:", err);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
-    loadContact();
-  }, []);
+    loadData();
 
-  useEffect(() => {
-    const loadDistrict = async () => {
-      if (!currentDistrict) return;
-      try {
-        const snap = await getDoc(
-          doc(db, "websites", "humanbiomedicalscom", "districts", currentDistrict)
-        );
-        if (snap.exists()) {
-          setDistrictData(snap.data());
-        }
-      } catch (err) {
-        console.error("Error loading district data:", err);
-      }
+    return () => {
+      isMounted = false;
     };
-
-    loadDistrict();
   }, [currentDistrict]);
 
   const getFieldIcon = (label = "") => {
@@ -136,7 +130,7 @@ export default function ContactPage() {
       <section className="section-padding bg-gradient-to-b from-white via-[#f5fcfd] to-[#eaf9fa]">
         <div className="container-custom">
           <div className="grid lg:grid-cols-12 gap-12 items-start">
-            {/* Left Contact Cards - 100% Dynamic from Firestore */}
+            {/* Left Contact Cards - 100% Dynamic from SQLite Admin */}
             <div className="lg:col-span-5 space-y-6">
               <SectionTitle
                 badge="Reach Us Directly"
@@ -178,14 +172,30 @@ export default function ContactPage() {
 
                     let displayValues = [];
                     if (Array.isArray(item?.value)) {
-                      displayValues = item.value.filter(
-                        (val) => typeof val === "string" && val.trim() !== ""
-                      );
+                      item.value.forEach((val) => {
+                        if (typeof val === "string") {
+                          if (isPhone || isEmail) {
+                            val.split(/[,/|\n;]/).forEach((v) => {
+                              const clean = v.trim();
+                              if (clean && !displayValues.includes(clean)) displayValues.push(clean);
+                            });
+                          } else if (val.trim()) {
+                            displayValues.push(val.trim());
+                          }
+                        }
+                      });
                     } else if (
                       typeof item?.value === "string" &&
                       item.value.trim() !== ""
                     ) {
-                      displayValues = [item.value.trim()];
+                      if (isPhone || isEmail) {
+                        item.value.split(/[,/|\n;]/).forEach((v) => {
+                          const clean = v.trim();
+                          if (clean && !displayValues.includes(clean)) displayValues.push(clean);
+                        });
+                      } else {
+                        displayValues = [item.value.trim()];
+                      }
                     }
 
                     // District dynamic replacement for address
@@ -282,7 +292,7 @@ export default function ContactPage() {
                 >
                   <button
                     onClick={() => setOpenFaq(isOpen ? null : idx)}
-                    className="w-full flex items-center justify-between p-6 text-left font-bold text-[#12383a] hover:text-[#007f86]"
+                    className="w-full flex items-center justify-between p-6 text-left font-bold text-[#12383a] hover:text-[#007f86] cursor-pointer"
                   >
                     <span className="text-base sm:text-lg pr-4">{faq.q}</span>
                     <ChevronDown

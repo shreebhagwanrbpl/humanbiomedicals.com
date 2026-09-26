@@ -47,127 +47,126 @@ export default function Navbar() {
   ];
 
   return (
- <header className="sticky top-0 z-50 border-b border-[#bfe8ea] bg-white/90 backdrop-blur-xl shadow-sm">
+    <header className="sticky top-0 z-50 border-b border-[#bfe8ea] bg-white/90 backdrop-blur-xl shadow-sm">
 
-  <div className="container-custom flex h-20 items-center justify-between">
+      <div className="container-custom flex h-20 items-center justify-between">
 
-    {/* Logo */}
+        {/* Logo */}
 
-    <Link href={makeLink("/")} className="relative block h-16 w-48 shrink-0 transition-transform hover:scale-105">
+        <Link href={makeLink("/")} className="relative block h-16 w-48 shrink-0 transition-transform hover:scale-105">
 
-      <Image
-        src="/logo.png"
-        alt="Raj Biosis Private Limited"
-        fill
-        className="object-contain object-left"
-        priority
-      />
+          <Image
+            src="/logo.png"
+            alt="Human Biomedicals"
+            fill
+            className="object-contain object-left"
+            priority
+          />
 
-    </Link>
-
-    {/* Desktop Menu */}
-
-    <nav className="hidden items-center gap-8 lg:flex">
-
-      {navLinks.map((link) => (
-
-        <Link
-          key={link.name}
-          href={makeLink(link.path)}
-          className="relative font-medium text-[#12383a] transition-all duration-300 hover:text-[#007f86] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-[#007f86] after:transition-all after:duration-300 hover:after:w-full"
-        >
-          {link.name}
         </Link>
 
-      ))}
+        {/* Desktop Menu */}
 
-    </nav>
+        <nav className="hidden items-center gap-8 lg:flex">
 
-    {/* Desktop Button */}
+          {navLinks.map((link) => (
 
-    <div className="hidden lg:block">
+            <Link
+              key={link.name}
+              href={makeLink(link.path)}
+              className="relative font-medium text-[#12383a] transition-all duration-300 hover:text-[#007f86] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-[#007f86] after:transition-all after:duration-300 hover:after:w-full"
+            >
+              {link.name}
+            </Link>
 
-      <Link href={makeLink("/contact")}>
+          ))}
 
-        <button className="rounded-xl bg-[#007f86] px-6 py-3 font-semibold text-white shadow-md transition-all duration-300 hover:bg-[#00656a] hover:shadow-xl hover:shadow-[#007f86]/20">
+        </nav>
 
-          Get Quote
+        {/* Desktop Button */}
 
-        </button>
+        <div className="hidden lg:block">
 
-      </Link>
+          <Link href={makeLink("/contact")}>
 
-    </div>
+            <button className="rounded-xl bg-[#007f86] px-6 py-3 font-semibold text-white shadow-md transition-all duration-300 hover:bg-[#00656a] hover:shadow-xl hover:shadow-[#007f86]/20">
 
-    {/* Mobile Button */}
+              Get Quote
 
-    <button
-      onClick={() => setMenuOpen(!menuOpen)}
-      className="rounded-xl border border-[#bfe8ea] bg-[#eaf9fa] p-2 transition-all duration-300 hover:bg-[#d9f3f5] lg:hidden"
-    >
-
-      {menuOpen ? (
-        <X
-          size={26}
-          className="text-[#007f86]"
-        />
-      ) : (
-        <Menu
-          size={26}
-          className="text-[#007f86]"
-        />
-      )}
-
-    </button>
-
-  </div>
-
-  {/* Mobile Menu */}
-
-  <div
-    className={`overflow-hidden transition-all duration-300 lg:hidden ${
-      menuOpen ? "max-h-[500px]" : "max-h-0"
-    }`}
-  >
-
-    <div className="border-t border-[#bfe8ea] bg-white px-6 py-6">
-
-      <nav className="flex flex-col gap-5">
-
-        {navLinks.map((link) => (
-
-          <Link
-            key={link.name}
-            href={makeLink(link.path)}
-            onClick={() => setMenuOpen(false)}
-            className="font-medium text-[#12383a] transition-all duration-300 hover:translate-x-1 hover:text-[#007f86]"
-          >
-
-            {link.name}
+            </button>
 
           </Link>
 
-        ))}
+        </div>
 
-        <Link
-          href={makeLink("/contact")}
-          onClick={() => setMenuOpen(false)}
+        {/* Mobile Button */}
+
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="rounded-xl border border-[#bfe8ea] bg-[#eaf9fa] p-2 transition-all duration-300 hover:bg-[#d9f3f5] lg:hidden"
         >
 
-          <button className="mt-2 w-full rounded-xl bg-[#007f86] py-3 font-semibold text-white transition-all duration-300 hover:bg-[#00656a]">
+          {menuOpen ? (
+            <X
+              size={26}
+              className="text-[#007f86]"
+            />
+          ) : (
+            <Menu
+              size={26}
+              className="text-[#007f86]"
+            />
+          )}
 
-            Get Quote
+        </button>
 
-          </button>
+      </div>
 
-        </Link>
+      {/* Mobile Menu */}
 
-      </nav>
+      <div
+        className={`overflow-hidden transition-all duration-300 lg:hidden ${menuOpen ? "max-h-[500px]" : "max-h-0"
+          }`}
+      >
 
-    </div>
+        <div className="border-t border-[#bfe8ea] bg-white px-6 py-6">
 
-  </div>
+          <nav className="flex flex-col gap-5">
 
-</header>
+            {navLinks.map((link) => (
+
+              <Link
+                key={link.name}
+                href={makeLink(link.path)}
+                onClick={() => setMenuOpen(false)}
+                className="font-medium text-[#12383a] transition-all duration-300 hover:translate-x-1 hover:text-[#007f86]"
+              >
+
+                {link.name}
+
+              </Link>
+
+            ))}
+
+            <Link
+              href={makeLink("/contact")}
+              onClick={() => setMenuOpen(false)}
+            >
+
+              <button className="mt-2 w-full rounded-xl bg-[#007f86] py-3 font-semibold text-white transition-all duration-300 hover:bg-[#00656a]">
+
+                Get Quote
+
+              </button>
+
+            </Link>
+
+          </nav>
+
+        </div>
+
+      </div>
+
+    </header>
   );
 }

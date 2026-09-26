@@ -7,9 +7,9 @@ export async function generateMetadata({ params }) {
         ?.replace(/-/g, " ")
         ?.replace(/\b\w/g, (c) => c.toUpperCase());
 
-    const title = `${productName} Supplier in India | Price, Dealer & Distributor | Raj Biosis Private Limited`;
+    const title = `${productName} Supplier in India | Price, Dealer & Distributor | Human Biomedicals`;
 
-    const description = `Buy ${productName} at best price in India. Trusted supplier, dealer and distributor of ${productName} for hospitals, laboratories, diagnostic centers, research institutes and healthcare facilities. Contact Raj Biosis Private Limited  for latest quotation and product details.`;
+    const description = `Buy ${productName} at best price in India. Trusted supplier, dealer and distributor of ${productName} for hospitals, laboratories, diagnostic centers, research institutes and healthcare facilities. Contact Human Biomedicals for latest quotation and product details.`;
 
     const url = `https://humanbiomedicals.com/items/${slug}`;
 
@@ -39,8 +39,7 @@ export async function generateMetadata({ params }) {
             "Diagnostic Equipment",
             "Hospital Equipment",
             "Healthcare Equipment",
-            "Raj Biosis Private Limited",
-            "Raj Biosis",
+            "Human Biomedicals",
         ],
 
         alternates: {
@@ -51,7 +50,7 @@ export async function generateMetadata({ params }) {
             title,
             description,
             url,
-            siteName: "Raj Biosis Private Limited",
+            siteName: "Human Biomedicals",
             type: "website",
             locale: "en_IN",
         },

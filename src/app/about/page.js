@@ -82,7 +82,7 @@ export default function AboutPage() {
               <div className="relative overflow-hidden rounded-[36px] border border-[#bfe8ea] bg-gradient-to-br from-[#eaf9fa] via-white to-[#d9f3f5] p-8 shadow-xl shadow-[#007f86]/10">
                 <Image
                   src={DDS}
-                  alt="Raj Biosis Private Limited Team & Facility"
+                  alt="Human Biomedicals Team & Facility"
                   width={1000}
                   height={750}
                   className="w-full h-auto object-contain transition duration-500 hover:scale-105"
@@ -106,7 +106,7 @@ export default function AboutPage() {
               <SectionTitle
                 badge="Our Legacy"
                 title="Trusted Partner in Medical & Diagnostic Engineering"
-                description="Raj Biosis Private Limited  was founded with a singular mission: to provide Indian hospitals and laboratories with reliable, world-class diagnostic technology backed by instant field service."
+                description="Human Biomedicals was founded with a singular mission: to provide Indian hospitals and laboratories with reliable, world-class diagnostic technology backed by instant field service."
               />
 
               <div className="mt-8 space-y-4 text-base sm:text-lg leading-relaxed text-[#12383a]">

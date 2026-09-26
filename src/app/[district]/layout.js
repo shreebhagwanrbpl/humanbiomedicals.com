@@ -6,12 +6,12 @@ export async function generateMetadata({ params }) {
     .replace(/-/g, " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());
 
-  const url = `https://.com/${district}`;
+  const url = `https://humanbiomedicals.com/${district}`;
 
   return {
-    title: `Biomedical & Diagnostic Equipment Supplier in ${districtName} | Raj Biosis`,
+    title: `Biomedical & Diagnostic Equipment Supplier in ${districtName} | Human Biomedicals`,
 
-    description: `Raj Biosis supplies diagnostic machines, laboratory equipment, reagents and biomedical products in ${districtName}.`,
+    description: `Human Biomedicals supplies diagnostic machines, laboratory equipment, reagents and biomedical products in ${districtName}.`,
 
     keywords: [
       `Biomedical Equipment ${districtName}`,

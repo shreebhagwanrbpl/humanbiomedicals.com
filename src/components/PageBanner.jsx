@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 
-export default function PageBanner({ title, subtitle, badge = "Raj Biosis" }) {
+export default function PageBanner({ title, subtitle, badge = "Human Biomedicals" }) {
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-[#f5fcfd] via-white to-[#eaf9fa] py-20 lg:py-28 border-b border-[#bfe8ea]/60">
       {/* Background Subtle Spheres & Mesh */}

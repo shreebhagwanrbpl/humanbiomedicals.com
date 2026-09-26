@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { addDoc, collection } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import toast from "react-hot-toast";
 import { Send, CheckCircle2, User, Phone, Mail, MessageSquare } from "lucide-react";
 
@@ -54,21 +52,23 @@ export default function ContactForm({
     try {
       setSubmitting(true);
 
-      await addDoc(
-        collection(
-          db,
-          "websitesQueries",
-          "humanbiomedicalscom",
-          "contactQueries"
-        ),
-        {
+      const response = await fetch("/api/contact-query", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
           name: form.name.trim(),
           email: form.email.trim(),
           phone: form.phone.trim(),
           message: form.message.trim(),
-          createdAt: new Date(),
-        }
-      );
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
 
       toast.success("Thank you! Your query has been submitted successfully.");
       setForm({
@@ -189,7 +189,7 @@ export default function ContactForm({
         <button
           type="submit"
           disabled={submitting}
-          className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#007f86] py-4 text-base font-bold text-white shadow-lg transition-all hover:bg-[#00656a] hover:shadow-xl hover:shadow-[#007f86]/25 disabled:opacity-60"
+          className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#007f86] py-4 text-base font-bold text-white shadow-lg transition-all hover:bg-[#00656a] hover:shadow-xl hover:shadow-[#007f86]/25 disabled:opacity-60 cursor-pointer"
         >
           {submitting ? (
             <span>Submitting Inquiry...</span>

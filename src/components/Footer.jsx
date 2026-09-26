@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Mail, Phone, MapPin, ArrowRight } from "lucide-react";
 import { FaFacebook, FaInstagram } from "react-icons/fa";
 import { fetchAllDynamicProducts } from "@/lib/fetchProducts";
+import { fetchContactData, fetchDistrictData } from "@/lib/data-fetcher";
+import { parseContactInfo } from "@/lib/contact-parser";
 
 export default function Footer() {
   const [contactInfo, setContactInfo] = useState([]);
@@ -51,11 +51,9 @@ export default function Footer() {
       try {
         // 1. Fetch Contact Info
         try {
-          const snap = await getDoc(
-            doc(db, "websites", "humanbiomedicalscom", "pages", "contact")
-          );
-          if (isMounted && snap.exists()) {
-            setContactInfo(snap.data().contactInfo || []);
+          const contactRes = await fetchContactData();
+          if (isMounted && Array.isArray(contactRes)) {
+            setContactInfo(contactRes);
           }
         } catch (contactErr) {
           console.error("Error loading footer contact:", contactErr);
@@ -89,16 +87,14 @@ export default function Footer() {
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
     const loadDistrict = async () => {
       if (!district) return;
 
       try {
-        const snap = await getDoc(
-          doc(db, "websites", "humanbiomedicalscom", "districts", district)
-        );
-
-        if (snap.exists()) {
-          setDistrictData(snap.data());
+        const data = await fetchDistrictData(district);
+        if (isMounted && data) {
+          setDistrictData(data);
         }
       } catch (err) {
         console.error("Error loading footer district:", err);
@@ -106,69 +102,22 @@ export default function Footer() {
     };
 
     loadDistrict();
+    return () => {
+      isMounted = false;
+    };
   }, [district]);
 
-  // Extract phone numbers flexibly from Firestore contactInfo
-  const phoneItems = contactInfo.filter((item) => {
-    const l = (item?.label || "").toLowerCase();
-    return (
-      l.includes("phone") ||
-      l.includes("mobile") ||
-      l.includes("tel") ||
-      l.includes("contact")
-    );
-  });
-
-  const phones = phoneItems
-    .flatMap((item) =>
-      Array.isArray(item.value) ? item.value : [item.value]
-    )
-    .filter((v) => typeof v === "string" && v.trim() !== "");
-
-  // Extract emails flexibly
-  const emailItem = contactInfo.find((item) => {
-    const l = (item?.label || "").toLowerCase();
-    return l.includes("email") || l.includes("mail");
-  });
-  const emails = emailItem
-    ? (Array.isArray(emailItem.value)
-      ? emailItem.value
-      : [emailItem.value]
-    ).filter((v) => typeof v === "string" && v.trim() !== "")
-    : [];
-
-  // Extract address flexibly
-  const addressItem = contactInfo.find((item) => {
-    const l = (item?.label || "").toLowerCase();
-    return (
-      l.includes("address") ||
-      l.includes("office") ||
-      l.includes("location") ||
-      l.includes("headquarter")
-    );
-  });
-  const rawAddress = addressItem
-    ? Array.isArray(addressItem.value)
-      ? addressItem.value.filter(Boolean).join(", ")
-      : typeof addressItem.value === "string"
-        ? addressItem.value.trim()
-        : ""
-    : "";
+  // Parse phone numbers, emails, address dynamically using contact-parser
+  const { phones, emails, address } = parseContactInfo(contactInfo);
 
   const dynamicAddress = districtData
     ? `${districtData.district}, ${districtData.state}, India`
-    : rawAddress;
+    : address;
 
-  // Fallback list of top categories if database has none yet
+  // Purely dynamic categories - no static fake categories fallback
   const displayCategories = useMemo(() => {
     if (categories.length > 0) return categories.slice(0, 6);
-    return [
-      "Diagnostic Analyzers",
-      "Molecular Diagnostics",
-      "Hospital & ICU Gear",
-      "Laboratory Equipment",
-      "Reagents & Consumables",
-    ];
+    return [];
   }, [categories]);
 
   if (loading) {
@@ -209,7 +158,7 @@ export default function Footer() {
               >
                 <Image
                   src="/logo.png"
-                  alt="Raj Biosis Private Limited"
+                  alt="Human Biomedicals"
                   fill
                   className="object-contain object-left"
                 />
@@ -230,7 +179,7 @@ export default function Footer() {
                   href="https://www.facebook.com/rajbiosispvtltd/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="Follow Raj Biosis on Facebook"
+                  aria-label="Follow Human Biomedicals on Facebook"
                   className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#bfe8ea] bg-white text-[#1877F2] shadow-sm transition-all duration-300 hover:scale-110 hover:bg-[#1877F2] hover:text-white hover:shadow-md"
                 >
                   <FaFacebook size={20} />
@@ -240,7 +189,7 @@ export default function Footer() {
                   href="https://www.instagram.com/rajbiosisindia/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="Follow Raj Biosis on Instagram"
+                  aria-label="Follow Human Biomedicals on Instagram"
                   className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#bfe8ea] bg-white text-[#E4405F] shadow-sm transition-all duration-300 hover:scale-110 hover:bg-gradient-to-tr hover:from-[#1bb9c1] hover:via-[#007f86] hover:to-[#00656a] hover:text-white hover:shadow-md"
                 >
                   <FaInstagram size={20} />
@@ -280,16 +229,20 @@ export default function Footer() {
               Product Categories
             </h3>
             <div className="flex flex-col gap-2.5 text-sm font-medium">
-              {displayCategories.map((cat, idx) => (
-                <Link
-                  key={idx}
-                  href={makeLink(`/items?category=${encodeURIComponent(cat)}`)}
-                  className="text-[#12383a] transition-all duration-300 hover:translate-x-1.5 hover:text-[#007f86] flex items-center gap-1.5"
-                >
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#007f86]" />
-                  <span className="truncate">{cat}</span>
-                </Link>
-              ))}
+              {displayCategories.length > 0 ? (
+                displayCategories.map((cat, idx) => (
+                  <Link
+                    key={idx}
+                    href={makeLink(`/items?category=${encodeURIComponent(cat)}`)}
+                    className="text-[#12383a] transition-all duration-300 hover:translate-x-1.5 hover:text-[#007f86] flex items-center gap-1.5"
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#007f86]" />
+                    <span className="truncate">{cat}</span>
+                  </Link>
+                ))
+              ) : (
+                <p className="text-xs text-[#61777a]">Browse our full equipment catalog below.</p>
+              )}
               <Link
                 href={makeLink("/items")}
                 className="mt-2 text-xs font-bold text-[#007f86] hover:underline"
@@ -299,7 +252,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Contact Info - Purely Dynamic from Firestore */}
+          {/* Contact Info - Purely Dynamic from SQLite Admin */}
           <div>
             <h3 className="mb-5 text-lg font-bold text-[#12383a]">
               Contact Info
@@ -364,7 +317,7 @@ export default function Footer() {
 
         {/* Bottom Bar with Copyright & Social Icon Backup */}
         <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-[#bfe8ea] pt-8 text-sm text-[#61777a] md:flex-row">
-          <p>© 2026 Raj Biosis Private Limited. All rights reserved.</p>
+          <p>© 2026 Human Biomedicals. All rights reserved.</p>
           <div className="flex items-center gap-4">
             <a
               href="https://www.facebook.com/rajbiosispvtltd/"

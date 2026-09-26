@@ -155,27 +155,36 @@ export default function HeroCarousel({
       : FALLBACK_SLIDES;
 
   const heroTitle =
-    typeof homeData?.title === "string"
-      ? homeData.title.trim()
-      : "";
+    (typeof homeData?.title === "string" ? homeData.title :
+     typeof homeData?.heroTitle === "string" ? homeData.heroTitle :
+     typeof homeData?.heading === "string" ? homeData.heading : "").trim();
 
   const heroDescription =
-    typeof homeData?.description === "string"
-      ? homeData.description.trim()
-      : "";
+    (typeof homeData?.description === "string" ? homeData.description :
+     typeof homeData?.heroDescription === "string" ? homeData.heroDescription :
+     typeof homeData?.desc === "string" ? homeData.desc :
+     typeof homeData?.subheading === "string" ? homeData.subheading : "").trim();
 
   const btn1Text =
-    typeof homeData?.button1Text === "string"
-      ? homeData.button1Text.trim()
-      : "";
+    (typeof homeData?.button1Text === "string" ? homeData.button1Text :
+     typeof homeData?.button1 === "string" ? homeData.button1 :
+     typeof homeData?.btn1Text === "string" ? homeData.btn1Text :
+     typeof homeData?.btn1 === "string" ? homeData.btn1 : "").trim();
 
   const btn2Text =
-    typeof homeData?.button2Text === "string"
-      ? homeData.button2Text.trim()
-      : "";
+    (typeof homeData?.button2Text === "string" ? homeData.button2Text :
+     typeof homeData?.button2 === "string" ? homeData.button2 :
+     typeof homeData?.btn2Text === "string" ? homeData.btn2Text :
+     typeof homeData?.btn2 === "string" ? homeData.btn2 : "").trim();
 
-  const btn1Href = makeLink("/items");
-  const btn2Href = makeLink("/contact");
+  const rawBtn1Link = (typeof homeData?.button1Link === "string" && homeData.button1Link.trim()) ||
+    (typeof homeData?.btn1Link === "string" && homeData.btn1Link.trim()) || "/items";
+
+  const rawBtn2Link = (typeof homeData?.button2Link === "string" && homeData.button2Link.trim()) ||
+    (typeof homeData?.btn2Link === "string" && homeData.btn2Link.trim()) || "/contact";
+
+  const btn1Href = makeLink(rawBtn1Link);
+  const btn2Href = makeLink(rawBtn2Link);
 
   const activeMedia =
     slides.length > 0

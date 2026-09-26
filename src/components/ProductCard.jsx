@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ShieldCheck, ArrowRight, Microscope } from "lucide-react";
-import { makeSlug } from "@/data/productsData";
+import { makeSlug } from "@/lib/catalog-utils";
 
 export default function ProductCard({
   product,
