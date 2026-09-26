@@ -249,3 +249,55 @@ export function subscribeToCatalog(onUpdate) {
     }
   };
 }
+
+/**
+ * Subscribe to site data (e.g. home, contact, services) in real-time
+ */
+export function subscribeToSiteData(type = "home", onUpdate) {
+  let active = true;
+
+  const checkUpdates = async () => {
+    if (!active || typeof onUpdate !== "function") return;
+    try {
+      const res = await fetch(`/api/site-data?type=${encodeURIComponent(type)}&_t=${Date.now()}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const siteData = json?.data || null;
+        if (active && typeof onUpdate === "function") {
+          onUpdate(siteData);
+        }
+      }
+    } catch (err) {
+      // quiet catch
+    }
+  };
+
+  const interval = setInterval(checkUpdates, 2000);
+
+  const handleFocus = () => {
+    checkUpdates();
+  };
+
+  const handleVisibility = () => {
+    if (typeof document !== "undefined" && document.visibilityState === "visible") {
+      checkUpdates();
+    }
+  };
+
+  if (typeof window !== "undefined") {
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("visibilitychange", handleVisibility);
+  }
+
+  return () => {
+    active = false;
+    clearInterval(interval);
+    if (typeof window !== "undefined") {
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("visibilitychange", handleVisibility);
+    }
+  };
+}

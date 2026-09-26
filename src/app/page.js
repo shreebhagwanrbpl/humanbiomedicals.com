@@ -10,6 +10,8 @@ import {
   fetchContactData,
   fetchServicesData,
   fetchDistrictData,
+  subscribeToSiteData,
+  subscribeToCatalog,
 } from "@/lib/data-fetcher";
 import { parseContactInfo } from "@/lib/contact-parser";
 
@@ -283,8 +285,22 @@ export default function Home({ city }) {
 
     fetchData();
 
+    const unsubHome = subscribeToSiteData("home", (updatedHome) => {
+      if (isMounted && updatedHome) {
+        setHomeData(updatedHome);
+      }
+    });
+
+    const unsubCatalog = subscribeToCatalog((updatedProducts) => {
+      if (isMounted && Array.isArray(updatedProducts)) {
+        setProducts(updatedProducts);
+      }
+    });
+
     return () => {
       isMounted = false;
+      unsubHome();
+      unsubCatalog();
     };
   }, [district]);
 
@@ -637,12 +653,12 @@ export default function Home({ city }) {
 
             {/* ==================================================
                 DYNAMIC SERVICES
-                SQLITE ADMIN ONLY
+                SQLITE ADMIN ONLY - ONLY 3 SERVICES
             ================================================== */}
 
             {!loading &&
               services.length > 0 &&
-              services.map(
+              services.slice(0, 3).map(
                 (srv, idx) => (
 
                   <ServiceCard

@@ -35,113 +35,82 @@ export default function HeroCarousel({
   const videoRefs = useRef({});
 
   const parseMediaList = (data) => {
-    if (!data) return [];
+    if (!data || typeof data !== "object") return [];
 
     const list = [];
 
-    if (Array.isArray(data.media) && data.media.length > 0) {
-      data.media.forEach((item, idx) => {
-        const url =
-          typeof item === "string"
-            ? item
-            : item?.url;
+    const tryAddUrl = (rawItem, fallbackType = "image") => {
+      if (!rawItem) return;
+      let url = "";
+      let type = fallbackType;
 
-        const type =
-          item?.type ||
-          (url?.match(/\.(mp4|webm|ogg|mov)(\?.*)?$/i)
-            ? "video"
-            : "image");
+      if (typeof rawItem === "string") {
+        url = rawItem.trim();
+      } else if (typeof rawItem === "object") {
+        url = (rawItem.url || rawItem.src || rawItem.image || rawItem.imageUrl || rawItem.videoUrl || "").trim();
+        if (rawItem.type) type = rawItem.type;
+      }
 
-        if (
-          url &&
-          typeof url === "string" &&
-          url.trim() !== ""
-        ) {
-          list.push({
-            id: `media-${idx}`,
-            type,
-            url: url.trim(),
-          });
-        }
-      });
-    }
+      if (!url) return;
 
-    if (
-      list.length === 0 &&
-      Array.isArray(data.images) &&
-      data.images.length > 0
-    ) {
-      data.images.forEach((url, idx) => {
-        if (
-          url &&
-          typeof url === "string" &&
-          url.trim() !== ""
-        ) {
-          list.push({
-            id: `img-${idx}`,
-            type: "image",
-            url: url.trim(),
-          });
-        }
-      });
-    }
+      if (url.match(/\.(mp4|webm|ogg|mov)(\?.*)?$/i)) {
+        type = "video";
+      }
 
-    if (
-      list.length === 0 &&
-      (data.imageUrl || data.image)
-    ) {
-      const singleImg =
-        data.imageUrl || data.image;
-
-      if (
-        singleImg &&
-        typeof singleImg === "string" &&
-        singleImg.trim() !== ""
-      ) {
+      if (!list.some((item) => item.url === url)) {
         list.push({
-          id: "single-img",
-          type: "image",
-          url: singleImg.trim(),
+          id: `media-${list.length}-${url.slice(-10)}`,
+          type,
+          url,
         });
+      }
+    };
+
+    // 1. Check array fields
+    const arrayFields = [
+      data.media,
+      data.images,
+      data.slides,
+      data.carousel,
+      data.carouselImages,
+      data.bannerImages,
+      data.banners,
+      data.heroImages,
+      data.sliderImages,
+      data.gallery,
+    ];
+
+    for (const arr of arrayFields) {
+      if (Array.isArray(arr) && arr.length > 0) {
+        arr.forEach((item) => tryAddUrl(item));
       }
     }
 
-    if (
-      Array.isArray(data.videos) &&
-      data.videos.length > 0
-    ) {
-      data.videos.forEach((vUrl, idx) => {
-        if (
-          vUrl &&
-          typeof vUrl === "string" &&
-          vUrl.trim() !== "" &&
-          !list.some(
-            (item) => item.url === vUrl.trim()
-          )
-        ) {
-          list.push({
-            id: `vid-${idx}`,
-            type: "video",
-            url: vUrl.trim(),
-          });
-        }
-      });
+    // 2. Check video arrays
+    if (Array.isArray(data.videos) && data.videos.length > 0) {
+      data.videos.forEach((v) => tryAddUrl(v, "video"));
     }
 
-    if (
-      data.videoUrl &&
-      typeof data.videoUrl === "string" &&
-      data.videoUrl.trim() !== "" &&
-      !list.some(
-        (item) =>
-          item.url === data.videoUrl.trim()
-      )
-    ) {
-      list.push({
-        id: "single-vid",
-        type: "video",
-        url: data.videoUrl.trim(),
-      });
+    // 3. Check single image/video fields
+    const singleFields = [
+      data.imageUrl,
+      data.image,
+      data.bannerUrl,
+      data.banner,
+      data.heroImageUrl,
+      data.heroImage,
+    ];
+    for (const s of singleFields) {
+      if (typeof s === "string" && s.trim()) {
+        tryAddUrl(s.trim());
+      }
+    }
+
+    if (typeof data.videoUrl === "string" && data.videoUrl.trim()) {
+      tryAddUrl(data.videoUrl.trim(), "video");
+    }
+    if (typeof data.video === "string" && data.video.trim()) {
+      tryAddUrl(data.video.trim(), "video");
     }
 
     return list;
@@ -155,33 +124,36 @@ export default function HeroCarousel({
       : FALLBACK_SLIDES;
 
   const heroTitle =
-    (typeof homeData?.title === "string" ? homeData.title :
-     typeof homeData?.heroTitle === "string" ? homeData.heroTitle :
-     typeof homeData?.heading === "string" ? homeData.heading : "").trim();
+    (typeof homeData?.title === "string" && homeData.title.trim()) ||
+    (typeof homeData?.heroTitle === "string" && homeData.heroTitle.trim()) ||
+    (typeof homeData?.heading === "string" && homeData.heading.trim()) ||
+    "";
 
   const heroDescription =
-    (typeof homeData?.description === "string" ? homeData.description :
-     typeof homeData?.heroDescription === "string" ? homeData.heroDescription :
-     typeof homeData?.desc === "string" ? homeData.desc :
-     typeof homeData?.subheading === "string" ? homeData.subheading : "").trim();
+    (typeof homeData?.description === "string" && homeData.description.trim()) ||
+    (typeof homeData?.heroDescription === "string" && homeData.heroDescription.trim()) ||
+    (typeof homeData?.desc === "string" && homeData.desc.trim()) ||
+    "";
 
   const btn1Text =
-    (typeof homeData?.button1Text === "string" ? homeData.button1Text :
-     typeof homeData?.button1 === "string" ? homeData.button1 :
-     typeof homeData?.btn1Text === "string" ? homeData.btn1Text :
-     typeof homeData?.btn1 === "string" ? homeData.btn1 : "").trim();
+    (typeof homeData?.button1Text === "string" && homeData.button1Text.trim()) ||
+    (typeof homeData?.button1 === "string" && homeData.button1.trim()) ||
+    "";
 
   const btn2Text =
-    (typeof homeData?.button2Text === "string" ? homeData.button2Text :
-     typeof homeData?.button2 === "string" ? homeData.button2 :
-     typeof homeData?.btn2Text === "string" ? homeData.btn2Text :
-     typeof homeData?.btn2 === "string" ? homeData.btn2 : "").trim();
+    (typeof homeData?.button2Text === "string" && homeData.button2Text.trim()) ||
+    (typeof homeData?.button2 === "string" && homeData.button2.trim()) ||
+    "";
 
-  const rawBtn1Link = (typeof homeData?.button1Link === "string" && homeData.button1Link.trim()) ||
-    (typeof homeData?.btn1Link === "string" && homeData.btn1Link.trim()) || "/items";
+  const rawBtn1Link =
+    (typeof homeData?.button1Link === "string" && homeData.button1Link.trim()) ||
+    (typeof homeData?.btn1Link === "string" && homeData.btn1Link.trim()) ||
+    "/items";
 
-  const rawBtn2Link = (typeof homeData?.button2Link === "string" && homeData.button2Link.trim()) ||
-    (typeof homeData?.btn2Link === "string" && homeData.btn2Link.trim()) || "/contact";
+  const rawBtn2Link =
+    (typeof homeData?.button2Link === "string" && homeData.button2Link.trim()) ||
+    (typeof homeData?.btn2Link === "string" && homeData.btn2Link.trim()) ||
+    "/contact";
 
   const btn1Href = makeLink(rawBtn1Link);
   const btn2Href = makeLink(rawBtn2Link);
@@ -378,101 +350,31 @@ export default function HeroCarousel({
             "
           />
 
-          {/* TITLE */}
-
+          {/* DYNAMIC TITLE */}
           {heroTitle && (
             <motion.div
               key={`title-${currentSlide}`}
-              initial={{
-                opacity: 0,
-                x: -25,
-              }}
-              animate={{
-                opacity: 1,
-                x: 0,
-              }}
-              transition={{
-                duration: 0.55,
-              }}
-              className="
-                absolute
-                left-5
-                top-7
-                z-[55]
-                w-[42%]
-                max-w-[560px]
-                text-left
-                sm:left-10
-                sm:top-10
-                sm:w-[40%]
-                lg:left-14
-                lg:top-12
-                lg:w-[38%]
-              "
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.55 }}
+              className="absolute left-6 top-6 z-20 w-[44%] max-w-[520px] text-left sm:left-10 sm:top-8 sm:w-[42%] lg:left-12 lg:top-10 lg:w-[40%]"
             >
-              <h1
-                className="
-                  !m-0
-                  text-2xl
-                  font-black
-                  leading-[1.08]
-                  !text-[#12383a]
-                  sm:text-3xl
-                  md:text-4xl
-                  lg:text-[44px]
-                  xl:text-[48px]
-                "
-              >
+              <h1 className="!m-0 text-xl font-black leading-tight !text-[#12383a] sm:text-2xl md:text-3xl lg:text-[32px] xl:text-[36px] line-clamp-3">
                 {heroTitle}
               </h1>
             </motion.div>
           )}
 
-          {/* DESCRIPTION */}
-
+          {/* DYNAMIC DESCRIPTION */}
           {heroDescription && (
             <motion.div
-              key={`description-${currentSlide}`}
-              initial={{
-                opacity: 0,
-                x: 25,
-              }}
-              animate={{
-                opacity: 1,
-                x: 0,
-              }}
-              transition={{
-                duration: 0.55,
-                delay: 0.08,
-              }}
-              className="
-                absolute
-                right-5
-                top-8
-                z-[55]
-                w-[30%]
-                max-w-[440px]
-                text-left
-                sm:right-10
-                sm:top-12
-                sm:w-[29%]
-                lg:right-14
-                lg:top-14
-                lg:w-[28%]
-              "
+              key={`desc-${currentSlide}`}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.55, delay: 0.08 }}
+              className="absolute right-6 top-6 z-20 w-[36%] max-w-[420px] text-right sm:right-10 sm:top-8 sm:w-[34%] lg:right-12 lg:top-10 lg:w-[32%]"
             >
-              <p
-                className="
-                  !m-0
-                  text-sm
-                  font-medium
-                  leading-6
-                  !text-[#61777a]
-                  sm:text-base
-                  lg:text-[17px]
-                  lg:leading-7
-                "
-              >
+              <p className="!m-0 text-xs font-medium leading-relaxed !text-[#61777a] sm:text-sm lg:text-[15px] line-clamp-4">
                 {heroDescription}
               </p>
             </motion.div>
@@ -709,11 +611,7 @@ export default function HeroCarousel({
                 ) : (
                   <img
                     src={activeMedia.url}
-                    alt={
-                      heroTitle ||
-                      `Hero Slide ${currentSlide + 1
-                      }`
-                    }
+                    alt={`Hero Slide ${currentSlide + 1}`}
                     className="
                       h-full
                       w-full
@@ -771,7 +669,7 @@ export default function HeroCarousel({
                 absolute
                 left-5
                 top-[55%]
-                z-[9999]
+                z-20
                 flex
                 h-14
                 w-14
@@ -803,7 +701,7 @@ export default function HeroCarousel({
                 alignItems: "center",
                 justifyContent: "center",
                 position: "absolute",
-                zIndex: 9999,
+                zIndex: 20,
                 cursor: "pointer",
                 padding: 0,
                 color: "#ffffff",
@@ -843,7 +741,7 @@ export default function HeroCarousel({
                 absolute
                 right-5
                 top-[55%]
-                z-[9999]
+                z-20
                 flex
                 h-14
                 w-14
@@ -875,7 +773,7 @@ export default function HeroCarousel({
                 alignItems: "center",
                 justifyContent: "center",
                 position: "absolute",
-                zIndex: 9999,
+                zIndex: 20,
                 cursor: "pointer",
                 padding: 0,
                 color: "#ffffff",
@@ -903,270 +801,27 @@ export default function HeroCarousel({
             </button>
           )}
 
-          {/* CONTACT BUTTON */}
-
-          {/* CONTACT BUTTON - TEAL BACKGROUND + WHITE ICON + WHITE TEXT */}
-
+          {/* DYNAMIC BUTTON 2 (CONNECT / CONTACT) */}
           {btn2Text && (
             <Link
               href={btn2Href}
-              className="
-      group
-      absolute
-      bottom-10
-      left-5
-      z-[9999]
-      inline-flex
-      items-center
-      justify-center
-      gap-2
-      rounded-xl
-      border-2
-      border-[#007f86]
-      bg-[#007f86]
-      px-5
-      py-3.5
-      text-sm
-      font-bold
-      text-white
-      shadow-lg
-      transition-all
-      duration-300
-      hover:-translate-y-0.5
-      hover:bg-[#00656a]
-      hover:text-white
-      sm:left-10
-      sm:px-6
-      lg:left-14
-    "
-              style={{
-                color: "#ffffff",
-                position: "absolute",
-                zIndex: 9999,
-                bottom: "20px",
-                left: "24px",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "9px",
-                background: "#007f86",
-                border: "2px solid #007f86",
-                borderRadius: "13px",
-                padding: "14px 22px",
-                fontWeight: "700",
-              }}
+              className="group absolute bottom-5 left-6 z-20 inline-flex items-center justify-center gap-2 rounded-xl border-2 border-[#007f86] bg-[#007f86] px-5 py-3 text-sm font-bold !text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#00656a] hover:!text-white sm:bottom-6 sm:left-10 lg:left-12"
+              style={{ color: "#ffffff", WebkitTextFillColor: "#ffffff" }}
             >
-              {/* PHONE ICON - ALWAYS WHITE */}
-              <span
-                aria-hidden="true"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#ffffff",
-                  WebkitTextFillColor: "#ffffff",
-                  fontSize: "21px",
-                  lineHeight: "1",
-                  fontWeight: "700",
-                  visibility: "visible",
-                  opacity: 1,
-                }}
-              >
-                ☎
-              </span>
-
-              {/* CONTACT TEXT - ALWAYS WHITE */}
-              <span
-                style={{
-                  display: "inline-block",
-                  color: "#ffffff",
-                  WebkitTextFillColor: "#ffffff",
-                  fontSize: "14px",
-                  lineHeight: "1.2",
-                  fontWeight: "700",
-                  whiteSpace: "nowrap",
-                  visibility: "visible",
-                  opacity: 1,
-                }}
-              >
-                {btn2Text}
-              </span>
+              <span style={{ color: "#ffffff", WebkitTextFillColor: "#ffffff" }}>{btn2Text}</span>
             </Link>
           )}
-          {/* EXPLORE PRODUCTS - WHITE TEXT + WHITE ICON */}
 
+          {/* DYNAMIC BUTTON 1 (EXPLORE / CATALOG) */}
           {btn1Text && (
             <Link
               href={btn1Href}
-              className="
-                group
-                absolute
-                bottom-10
-                right-5
-                z-[9999]
-                inline-flex
-                items-center
-                justify-center
-                gap-2
-                rounded-xl
-                bg-[#007f86]
-                px-5
-                py-3.5
-                text-sm
-                font-bold
-                text-white
-                shadow-lg
-                transition-all
-                duration-300
-                hover:-translate-y-0.5
-                hover:bg-[#00656a]
-                sm:right-10
-                sm:px-6
-                lg:right-14
-              "
-              style={{
-                color: "#ffffff",
-                position: "absolute",
-                zIndex: 9999,
-                bottom: "20px",
-                right: "24px",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "10px",
-                background: "#007f86",
-                border: "none",
-                borderRadius: "13px",
-                padding: "14px 22px",
-                fontWeight: "700",
-              }}
+              className="group absolute bottom-5 right-6 z-20 inline-flex items-center justify-center gap-2 rounded-xl bg-[#007f86] px-5 py-3 text-sm font-bold !text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#00656a] hover:!text-white sm:bottom-6 sm:right-10 lg:right-12"
+              style={{ color: "#ffffff", WebkitTextFillColor: "#ffffff" }}
             >
-              <span
-                style={{
-                  display: "inline-block",
-                  color: "#ffffff",
-                  WebkitTextFillColor: "#ffffff",
-                  fontSize: "14px",
-                  lineHeight: "1.2",
-                  fontWeight: "700",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {btn1Text}
-              </span>
-
-              <span
-                aria-hidden="true"
-                style={{
-                  display: "inline-block",
-                  color: "#ffffff",
-                  WebkitTextFillColor: "#ffffff",
-                  fontSize: "25px",
-                  lineHeight: "0.8",
-                  fontWeight: "700",
-                  marginTop: "-2px",
-                }}
-              >
-                →
-              </span>
+              <span style={{ color: "#ffffff", WebkitTextFillColor: "#ffffff" }}>{btn1Text}</span>
+              <span aria-hidden="true" className="transition-transform duration-300 group-hover:translate-x-1" style={{ color: "#ffffff", WebkitTextFillColor: "#ffffff" }}>→</span>
             </Link>
-          )}
-
-          {/* PLAY / PAUSE - WHITE ICON */}
-
-          {slides.length > 1 && (
-            <button
-              type="button"
-              onClick={() => {
-                setIsPlaying((prev) => !prev);
-              }}
-              title={
-                isPlaying
-                  ? "Pause Slideshow"
-                  : "Play Slideshow"
-              }
-              aria-label={
-                isPlaying
-                  ? "Pause Slideshow"
-                  : "Play Slideshow"
-              }
-              className="
-                absolute
-                right-5
-                top-5
-                z-[9999]
-                flex
-                h-14
-                w-14
-                items-center
-                justify-center
-                rounded-full
-                bg-[#007f86]
-                text-white
-                shadow-[0_10px_35px_rgba(0,0,0,0.18)]
-                transition-all
-                duration-300
-                hover:bg-[#00656a]
-              "
-              style={{
-                width: "54px",
-                height: "54px",
-                minWidth: "54px",
-                minHeight: "54px",
-                borderRadius: "50%",
-                background: "#007f86",
-                border: "2px solid #007f86",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                position: "absolute",
-                zIndex: 9999,
-                cursor: "pointer",
-                padding: 0,
-                color: "#ffffff",
-              }}
-            >
-              {isPlaying ? (
-                <span
-                  aria-hidden="true"
-                  style={{
-                    display: "block",
-                    color: "#ffffff",
-                    WebkitTextFillColor: "#ffffff",
-                    fontSize: "25px",
-                    fontWeight: "900",
-                    lineHeight: "1",
-                    letterSpacing: "-4px",
-                    width: "25px",
-                    height: "25px",
-                    textAlign: "center",
-                    fontFamily:
-                      "Arial, Helvetica, sans-serif",
-                  }}
-                >
-                  Ⅱ
-                </span>
-              ) : (
-                <span
-                  aria-hidden="true"
-                  style={{
-                    display: "block",
-                    color: "#ffffff",
-                    WebkitTextFillColor: "#ffffff",
-                    fontSize: "25px",
-                    fontWeight: "900",
-                    lineHeight: "1",
-                    width: "25px",
-                    height: "25px",
-                    textAlign: "center",
-                    fontFamily:
-                      "Arial, Helvetica, sans-serif",
-                  }}
-                >
-                  ▶
-                </span>
-              )}
-            </button>
           )}
 
           {/* PAGINATION */}
@@ -1177,7 +832,7 @@ export default function HeroCarousel({
                 absolute
                 bottom-3
                 left-1/2
-                z-[9999]
+                z-20
                 flex
                 -translate-x-1/2
                 items-center

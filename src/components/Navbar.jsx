@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
+import logoImg from "../../public/logo.png";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -47,7 +48,7 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#bfe8ea] bg-white/90 backdrop-blur-xl shadow-sm">
+    <header className="sticky top-0 z-[100] border-b border-[#bfe8ea] bg-white/90 backdrop-blur-xl shadow-sm">
 
       <div className="container-custom flex h-20 items-center justify-between">
 
@@ -56,7 +57,7 @@ export default function Navbar() {
         <Link href={makeLink("/")} className="relative block h-16 w-48 shrink-0 transition-transform hover:scale-105">
 
           <Image
-            src="/logo.png"
+            src={logoImg}
             alt="Human Biomedicals"
             fill
             className="object-contain object-left"

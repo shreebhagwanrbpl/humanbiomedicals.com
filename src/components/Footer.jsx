@@ -9,6 +9,7 @@ import { FaFacebook, FaInstagram } from "react-icons/fa";
 import { fetchAllDynamicProducts } from "@/lib/fetchProducts";
 import { fetchContactData, fetchDistrictData } from "@/lib/data-fetcher";
 import { parseContactInfo } from "@/lib/contact-parser";
+import logoImg from "../../public/logo.png";
 
 export default function Footer() {
   const [contactInfo, setContactInfo] = useState([]);
@@ -157,7 +158,7 @@ export default function Footer() {
                 className="relative block h-16 w-52 shrink-0 mb-4 transition-transform hover:scale-105"
               >
                 <Image
-                  src="/logo.png"
+                  src={logoImg}
                   alt="Human Biomedicals"
                   fill
                   className="object-contain object-left"
