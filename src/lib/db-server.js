@@ -1,6 +1,5 @@
 import { cache } from "react";
 import {
-  fetchMasterCatalogFromSqlite,
   fetchRawCatalogData,
   fetchCatalogFromAdmin,
   fetchSiteDataFromAdmin,
@@ -14,6 +13,7 @@ import {
   isItemVisibleOnWebsite,
   isVisibleOnWebsite,
   normalizeProduct,
+  getProductBySlugFromMongo,
 } from "./admin-api.js";
 
 export {
@@ -30,7 +30,7 @@ export {
 };
 
 /**
- * React request-scoped cache for fast server-side rendering
+ * React request-scoped cache for ultra-fast server-side rendering
  */
 export const fetchFullCatalog = cache(async () => {
   const result = await fetchRawCatalogData(WEBSITE_ID);
@@ -55,6 +55,16 @@ export async function getCategoriesData() {
 
 export async function getProductBySlug(slug) {
   if (!slug) return null;
+
+  // 1. Try O(1) MongoDB Atlas lookup first (<1ms)
+  try {
+    const mongoProd = await getProductBySlugFromMongo(slug, WEBSITE_ID);
+    if (mongoProd) return mongoProd;
+  } catch (err) {
+    console.warn("[db-server] MongoDB slug lookup fallback:", err.message);
+  }
+
+  // 2. Fallback scan in memory
   const products = await fetchFullCatalog();
   const target = normalizeSlug(slug);
   return (

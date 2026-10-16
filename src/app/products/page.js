@@ -23,6 +23,7 @@ export default function ProductsPage() {
   const [search, setSearch] = useState("");
   const [openedCategory, setOpenedCategory] = useState("");
   const [activeCategory, setActiveCategory] = useState("");
+  const [highlightedProduct, setHighlightedProduct] = useState("");
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -97,6 +98,7 @@ export default function ProductsPage() {
     setOpenedCategory(category);
 
     setActiveCategory(category);
+    setHighlightedProduct(slug);
 
     setTimeout(() => {
 
@@ -109,13 +111,13 @@ export default function ProductsPage() {
 
           behavior: "smooth",
 
-          block: "start",
+          block: "center",
 
         });
 
       }
 
-    }, 250);
+    }, 150);
 
   };
 
@@ -305,7 +307,11 @@ export default function ProductsPage() {
                           <div
                             key={product.slug}
                             id={product.slug}
-                            className="group rounded-[30px] border border-green-100 bg-white p-7 shadow-lg shadow-green-100 transition-all duration-300 hover:-translate-y-2 hover:border-green-300 hover:shadow-2xl hover:shadow-green-200"
+                            className={`group rounded-[30px] border bg-white p-7 shadow-lg transition-all duration-300 hover:-translate-y-2 hover:border-green-300 hover:shadow-2xl ${
+                              highlightedProduct === product.slug
+                                ? "border-green-600 ring-4 ring-green-300 shadow-2xl shadow-green-200 scale-[1.01]"
+                                : "border-green-100 shadow-green-100"
+                            }`}
                           >
 
                             <div className="grid items-center gap-8 lg:grid-cols-[250px_1fr_190px]">
@@ -383,11 +389,11 @@ export default function ProductsPage() {
                               <div className="flex justify-center lg:justify-end">
 
                                 <Link
-                                  href={`/products/${product.slug}`}
+                                  href={`/items/${product.slug}`}
                                   className="w-full lg:w-auto"
                                 >
 
-                                  <button className="w-full rounded-xl bg-green-600 px-8 py-4 font-semibold text-white transition-all duration-300 hover:bg-green-700 hover:shadow-lg hover:shadow-green-200 lg:w-auto">
+                                  <button className="w-full rounded-xl bg-green-600 px-8 py-4 font-semibold text-white transition-all duration-300 hover:bg-green-700 hover:shadow-lg hover:shadow-green-200 lg:w-auto cursor-pointer">
 
                                     View Details →
 

@@ -8,17 +8,17 @@ const FALLBACK_SLIDES = [
   {
     id: "static-hero-1",
     type: "image",
-    url: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=1900&q=80",
+    url: "/images/hero-biochemistry-analyzer.jpg",
   },
   {
     id: "static-hero-2",
     type: "image",
-    url: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1900&q=80",
+    url: "/images/hero-hematology-analyzer.jpg",
   },
   {
     id: "static-hero-3",
     type: "image",
-    url: "https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=1900&q=80",
+    url: "/images/hero-pathology-workstation.jpg",
   },
 ];
 

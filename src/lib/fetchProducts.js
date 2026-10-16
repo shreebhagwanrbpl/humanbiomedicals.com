@@ -3,7 +3,7 @@ import { fetchFullCatalog, normalizeProduct, makeSlug } from "./data-fetcher.js"
 export { normalizeProduct, makeSlug };
 
 /**
- * Fetches dynamic products from SQLite Admin API
+ * Fetches dynamic products from MongoDB & SuperAdmin API
  * Returns empty array if no products exist (zero static text/product fallback).
  */
 export async function fetchAllDynamicProducts() {

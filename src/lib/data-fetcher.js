@@ -19,6 +19,9 @@ export {
 };
 
 let clientCatalogPromise = null;
+let clientCatalogCache = null;
+let clientCatalogTime = 0;
+const CLIENT_CACHE_TTL = 30 * 1000; // 30 seconds client-side cache
 
 /**
  * Fetch full catalog for client or server components
@@ -37,6 +40,11 @@ export async function fetchFullCatalogData() {
     return await fetchServerCatalog();
   }
 
+  const now = Date.now();
+  if (clientCatalogCache && (now - clientCatalogTime < CLIENT_CACHE_TTL)) {
+    return clientCatalogCache;
+  }
+
   if (clientCatalogPromise) {
     return clientCatalogPromise;
   }
@@ -44,20 +52,20 @@ export async function fetchFullCatalogData() {
   clientCatalogPromise = (async () => {
     try {
       const res = await fetch(`/api/catalog?_t=${Date.now()}`, {
-        cache: "no-store",
         headers: {
-          "Cache-Control": "no-cache",
-          Pragma: "no-cache",
+          Accept: "application/json",
         },
       });
       if (!res.ok) {
         throw new Error(`Failed to fetch catalog: ${res.status}`);
       }
       const data = await res.json();
+      clientCatalogCache = data;
+      clientCatalogTime = Date.now();
       return data;
     } catch (err) {
       console.error("[data-fetcher] Error in fetchFullCatalogData:", err);
-      return { categoryProducts: [], categoryList: [] };
+      return clientCatalogCache || { categoryProducts: [], categoryList: [] };
     } finally {
       clientCatalogPromise = null;
     }
@@ -111,10 +119,8 @@ async function fetchSiteDataType(type) {
 
   try {
     const res = await fetch(`/api/site-data?type=${encodeURIComponent(type)}&_t=${Date.now()}`, {
-      cache: "no-store",
       headers: {
-        "Cache-Control": "no-cache",
-        Pragma: "no-cache",
+        Accept: "application/json",
       },
     });
     if (!res.ok) return null;
@@ -150,8 +156,7 @@ export async function fetchDistrictData(district) {
 
   try {
     const res = await fetch(`/api/site-data?type=districts&_t=${Date.now()}`, {
-      cache: "no-store",
-      headers: { "Cache-Control": "no-cache" },
+      headers: { Accept: "application/json" },
     });
     if (!res.ok) return null;
     const json = await res.json();
@@ -175,8 +180,7 @@ export async function fetchDistrictsList() {
 
   try {
     const res = await fetch(`/api/site-data?type=districts&_t=${Date.now()}`, {
-      cache: "no-store",
-      headers: { "Cache-Control": "no-cache" },
+      headers: { Accept: "application/json" },
     });
     if (!res.ok) return [];
     const json = await res.json();
@@ -192,9 +196,7 @@ export async function fetchDistrictsList() {
 }
 
 /**
- * Subscribe to catalog updates in real-time.
- * Instant polling (1.5s) + Window Focus & Visibility Change triggers
- * Ensures any Admin assignment/removal reflects instantly on UI.
+ * Subscribe to catalog updates smartly without flooding the server
  */
 export function subscribeToCatalog(onUpdate) {
   let active = true;
@@ -202,35 +204,28 @@ export function subscribeToCatalog(onUpdate) {
   const checkUpdates = async () => {
     if (!active || typeof onUpdate !== "function") return;
     try {
-      const res = await fetch(`/api/catalog?_t=${Date.now()}`, {
-        cache: "no-store",
-        headers: { "Cache-Control": "no-cache" },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const prods = data?.categoryProducts || [];
-        if (active && typeof onUpdate === "function") {
-          onUpdate(prods);
-        }
+      const data = await fetchFullCatalogData();
+      const prods = data?.categoryProducts || [];
+      if (active && typeof onUpdate === "function") {
+        onUpdate(prods);
       }
     } catch (err) {
-      console.warn("[data-fetcher] subscribeToCatalog polling error:", err);
+      console.warn("[data-fetcher] subscribeToCatalog error:", err);
     }
   };
 
-  // Initial immediate fetch
+  // Immediate fetch
   checkUpdates();
 
-  // Polling every 1.5 seconds
-  const interval = setInterval(checkUpdates, 1500);
-
-  // Focus & Visibility change listeners for instant refresh when switching from Admin tab
+  // Refresh when user comes back from another tab (e.g. SuperAdmin)
   const handleFocus = () => {
+    clientCatalogTime = 0; // invalidate cache
     checkUpdates();
   };
 
   const handleVisibility = () => {
     if (typeof document !== "undefined" && document.visibilityState === "visible") {
+      clientCatalogTime = 0;
       checkUpdates();
     }
   };
@@ -239,6 +234,9 @@ export function subscribeToCatalog(onUpdate) {
     window.addEventListener("focus", handleFocus);
     window.addEventListener("visibilitychange", handleVisibility);
   }
+
+  // Sensible 60s background heartbeat
+  const interval = setInterval(checkUpdates, 60000);
 
   return () => {
     active = false;
@@ -251,7 +249,7 @@ export function subscribeToCatalog(onUpdate) {
 }
 
 /**
- * Subscribe to site data (e.g. home, contact, services) in real-time
+ * Subscribe to site data (e.g. home, contact, services)
  */
 export function subscribeToSiteData(type = "home", onUpdate) {
   let active = true;
@@ -259,23 +257,17 @@ export function subscribeToSiteData(type = "home", onUpdate) {
   const checkUpdates = async () => {
     if (!active || typeof onUpdate !== "function") return;
     try {
-      const res = await fetch(`/api/site-data?type=${encodeURIComponent(type)}&_t=${Date.now()}`, {
-        cache: "no-store",
-        headers: { "Cache-Control": "no-cache" },
-      });
-      if (res.ok) {
-        const json = await res.json();
-        const siteData = json?.data || null;
-        if (active && typeof onUpdate === "function") {
-          onUpdate(siteData);
-        }
+      const siteData = await fetchSiteDataType(type);
+      if (active && typeof onUpdate === "function") {
+        onUpdate(siteData);
       }
-    } catch (err) {
+    } catch {
       // quiet catch
     }
   };
 
-  const interval = setInterval(checkUpdates, 2000);
+  // Immediate fetch
+  checkUpdates();
 
   const handleFocus = () => {
     checkUpdates();
@@ -291,6 +283,9 @@ export function subscribeToSiteData(type = "home", onUpdate) {
     window.addEventListener("focus", handleFocus);
     window.addEventListener("visibilitychange", handleVisibility);
   }
+
+  // Sensible 60s heartbeat
+  const interval = setInterval(checkUpdates, 60000);
 
   return () => {
     active = false;

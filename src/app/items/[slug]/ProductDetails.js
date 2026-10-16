@@ -187,10 +187,16 @@ const getWebsiteDomain = () => {
     return "humanbiomedicals.com";
 };
 
-export default function ProductDetails({ slug }) {
-    const [product, setProduct] = useState(null);
+export default function ProductDetails({ slug, initialProduct = null }) {
+    const [product, setProduct] = useState(initialProduct || null);
     const [imageLoaded, setImageLoaded] = useState(false);
-    const [selectedImage, setSelectedImage] = useState("");
+    const [selectedImage, setSelectedImage] = useState(
+        initialProduct?.image ||
+        (Array.isArray(initialProduct?.images) && initialProduct.images[0]) ||
+        initialProduct?.imgUrl ||
+        initialProduct?.imageUrl ||
+        ""
+    );
     const [selectedMedia, setSelectedMedia] = useState("image");
     const [showShare, setShowShare] = useState(false);
     const [contactInfo, setContactInfo] = useState([]);
@@ -296,14 +302,36 @@ export default function ProductDetails({ slug }) {
         city.slice(1);
 
     useEffect(() => {
+        if (initialProduct && (initialProduct.slug === slug || initialProduct.id === slug || initialProduct.categoryProductId === slug)) {
+            setProduct(initialProduct);
+            const mainImg =
+                (Array.isArray(initialProduct.images) && initialProduct.images[0]) ||
+                initialProduct.image ||
+                initialProduct.imgUrl ||
+                initialProduct.imageUrl ||
+                "/logo.png";
+            setSelectedImage(mainImg);
+            return;
+        }
+
         const loadProduct = async () => {
             try {
                 const allProducts = await fetchAllDynamicProducts();
+                const target = String(slug || "").toLowerCase().trim();
+                let decoded = target;
+                try {
+                    decoded = decodeURIComponent(target);
+                } catch {}
 
                 const found = Array.isArray(allProducts)
-                    ? allProducts.find(
-                        (p) => p.slug === slug || p.id === slug
-                    )
+                    ? allProducts.find((p) => {
+                        if (!p) return false;
+                        const pSlug = String(p.slug || "").toLowerCase().trim();
+                        const pId = String(p.id || "").toLowerCase().trim();
+                        const pUid = String(p.uid || "").toLowerCase().trim();
+                        const pPid = String(p.productId || p.categoryProductId || "").toLowerCase().trim();
+                        return pSlug === target || pSlug === decoded || pId === target || pUid === target || pPid === target;
+                    })
                     : null;
 
                 setProduct(found || null);
@@ -319,7 +347,7 @@ export default function ProductDetails({ slug }) {
                     setSelectedMedia("image");
                 }
             } catch (error) {
-                console.error("Error loading product from Firestore:", error);
+                console.error("Error loading product:", error);
                 setProduct(null);
                 setSelectedImage("");
                 setSelectedMedia("image");
@@ -327,7 +355,7 @@ export default function ProductDetails({ slug }) {
         };
 
         loadProduct();
-    }, [slug]);
+    }, [slug, initialProduct]);
 
     useEffect(() => {
         let isMounted = true;
